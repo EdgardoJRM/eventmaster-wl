@@ -3,18 +3,33 @@ frontend:
   phases:
     preBuild:
       commands:
-        - echo "Current directory:" && pwd
-        - echo "Listing files:" && ls -la
-        - echo "Checking for frontend:" && ls -la frontend/ || echo "Frontend not found in current dir"
-        - cd frontend && npm install
+        - pwd
+        - ls -la
+        - |
+          if [ -d "frontend" ]; then
+            echo "Frontend directory found"
+            cd frontend
+            npm install
+          else
+            echo "ERROR: Frontend directory not found!"
+            echo "Current directory contents:"
+            ls -la
+            exit 1
+          fi
     build:
       commands:
-        - cd frontend && npm run build
+        - |
+          if [ -d "frontend" ]; then
+            cd frontend
+            npm run build
+          else
+            echo "ERROR: Frontend directory not found in build phase!"
+            exit 1
+          fi
   artifacts:
     baseDirectory: frontend/.next
     files:
       - '**/*'
-    name: amplify-build
   cache:
     paths:
       - frontend/node_modules/**/*
