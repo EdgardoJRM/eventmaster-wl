@@ -32,9 +32,13 @@ frontend:
         - pwd
         - npm run build
   artifacts:
-    baseDirectory: frontend/.next/standalone
+    baseDirectory: frontend
     files:
-      - '**/*'
+      - '.next/**/*'
+      - 'public/**/*'
+      - 'package.json'
+      - 'next.config.js'
+      - 'node_modules/**/*'
   cache:
     paths:
       - frontend/node_modules/**/*
