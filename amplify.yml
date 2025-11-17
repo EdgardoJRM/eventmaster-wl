@@ -3,31 +3,34 @@ frontend:
   phases:
     preBuild:
       commands:
-        - pwd
-        - ls -la | head -10
         - |
-          if [ ! -d "frontend" ]; then
+          if [ -d "frontend" ]; then
+            cd frontend
+          elif [ -f "package.json" ]; then
+            echo "Already in frontend directory"
+          else
             echo "ERROR: frontend directory not found!"
+            pwd
             ls -la
             exit 1
           fi
-        - |
-          cd frontend
-          pwd
-          npm install
+        - pwd
+        - npm install
     build:
       commands:
         - |
-          if [ ! -d "frontend" ]; then
+          if [ -d "frontend" ]; then
+            cd frontend
+          elif [ -f "package.json" ]; then
+            echo "Already in frontend directory"
+          else
             echo "ERROR: frontend directory not found in build phase!"
             pwd
             ls -la
             exit 1
           fi
-        - |
-          cd frontend
-          pwd
-          npm run build
+        - pwd
+        - npm run build
   artifacts:
     baseDirectory: frontend/.next
     files:
