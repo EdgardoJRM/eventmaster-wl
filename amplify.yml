@@ -3,32 +3,14 @@ frontend:
   phases:
     preBuild:
       commands:
-        - |
-          if [ -d "frontend" ]; then
-            cd frontend
-          elif [ -f "package.json" ]; then
-            echo "Already in frontend directory"
-          else
-            echo "ERROR: frontend directory not found!"
-            pwd
-            ls -la
-            exit 1
-          fi
+        - echo "Setting AMPLIFY_MONOREPO_APP_ROOT"
+        - export AMPLIFY_MONOREPO_APP_ROOT=frontend
+        - cd frontend
         - pwd
         - npm install
     build:
       commands:
-        - |
-          if [ -d "frontend" ]; then
-            cd frontend
-          elif [ -f "package.json" ]; then
-            echo "Already in frontend directory"
-          else
-            echo "ERROR: frontend directory not found in build phase!"
-            pwd
-            ls -la
-            exit 1
-          fi
+        - cd frontend
         - pwd
         - npm run build
   artifacts:
