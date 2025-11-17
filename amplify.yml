@@ -3,12 +3,24 @@ frontend:
   phases:
     preBuild:
       commands:
-        - cd frontend
-        - npm install
+        - |
+          if [ -d "frontend" ]; then
+            cd frontend
+            npm install
+          else
+            echo "Frontend directory not found, checking structure..."
+            ls -la
+            npm install
+          fi
     build:
       commands:
-        - cd frontend
-        - npm run build
+        - |
+          if [ -d "frontend" ]; then
+            cd frontend
+            npm run build
+          else
+            npm run build
+          fi
   artifacts:
     baseDirectory: frontend/.next
     files:
