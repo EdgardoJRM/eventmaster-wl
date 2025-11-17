@@ -32,7 +32,7 @@ frontend:
         - pwd
         - npm run build
   artifacts:
-    baseDirectory: frontend/.next
+    baseDirectory: frontend/.next/standalone
     files:
       - '**/*'
   cache:
