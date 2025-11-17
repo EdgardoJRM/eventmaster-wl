@@ -14,6 +14,7 @@ frontend:
     baseDirectory: frontend/.next
     files:
       - '**/*'
+    name: amplify-build
   cache:
     paths:
       - frontend/node_modules/**/*
