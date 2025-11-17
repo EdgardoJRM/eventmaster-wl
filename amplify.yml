@@ -3,18 +3,17 @@ frontend:
   phases:
     preBuild:
       commands:
-        - echo "Current directory:" && pwd
-        - echo "Checking for frontend:" && ls -la frontend/ 2>&1 | head -5 || echo "Frontend not found"
+        - echo "Current directory" && pwd
         - |
           if [ ! -d "frontend" ]; then
             echo "ERROR: frontend directory not found!"
             ls -la
             exit 1
           fi
-        - cd frontend && echo "Installing in: $(pwd)" && npm install
+        - cd frontend && npm install
     build:
       commands:
-        - cd frontend && echo "Building in: $(pwd)" && npm run build
+        - cd frontend && npm run build
   artifacts:
     baseDirectory: frontend/.next
     files:
