@@ -25,9 +25,9 @@ NEXT_PUBLIC_API_URL=https://h1g8k47icl.execute-api.us-east-1.amazonaws.com/prod
 NEXT_PUBLIC_USER_POOL_ID=us-east-1_BnjZCmw7O
 ```
 
-### 3. Cognito Client ID
+### 3. Cognito Client ID (NUEVO - Sin Secret)
 ```
-NEXT_PUBLIC_USER_POOL_CLIENT_ID=4qmr86u7hh5pd5s86l4lhfrubf
+NEXT_PUBLIC_USER_POOL_CLIENT_ID=5h866q6llftkq2lhidqbm4pntc
 ```
 
 ### 4. AWS Region
@@ -75,20 +75,22 @@ AMPLIFY_MONOREPO_APP_ROOT=frontend
 ## ⚠️ Notas Importantes
 
 ### SES Configuration
-Tu backend usa `noreply@hernandezmediaevents.com` para enviar emails. Asegúrate de que:
+Tu backend usa `soporte@edgardohernandez.com` para enviar emails. Asegúrate de que:
 
 1. **El email esté verificado en SES** (o el dominio completo)
 2. **SES esté fuera de sandbox mode** si quieres enviar a cualquier email
 
 Para verificar el email:
 ```bash
-aws ses verify-email-identity --email-address noreply@hernandezmediaevents.com --region us-east-1
+aws ses verify-email-identity --email-address soporte@edgardohernandez.com --region us-east-1
 ```
 
 Para verificar el dominio:
 ```bash
-aws ses verify-domain-identity --domain hernandezmediaevents.com --region us-east-1
+aws ses verify-domain-identity --domain edgardohernandez.com --region us-east-1
 ```
+
+**Estado actual:** ✅ Dominio `edgardohernandez.com` ya está verificado
 
 ### FRONTEND_URL en Lambda
 Asegúrate de que el Lambda `create-auth-challenge` tenga la variable de entorno:
