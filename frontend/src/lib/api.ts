@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { config } from '../config';
-import { signIn, confirmSignIn } from 'aws-amplify/auth';
 
 const api = axios.create({
   baseURL: config.apiUrl,
@@ -35,100 +34,16 @@ api.interceptors.response.use(
   }
 );
 
-// Auth API - uses Cognito directly, not REST endpoints
-// Prevenir múltiples llamadas simultáneas
-const pendingRequests = new Map<string, Promise<any>>();
-
+// Auth API - MODELO PODCAST PLATFORM (REST puro, sin Cognito Custom Auth)
 export const authApi = {
   requestMagicLink: async (email: string) => {
-    // Si ya hay una solicitud en progreso para este email, retornarla
-    if (pendingRequests.has(email)) {
-      console.log('Request already in progress for', email);
-      return pendingRequests.get(email);
-    }
-
-    // Crear nueva promesa y guardarla
-    const request = (async () => {
-      try {
-        // Primero intentamos signIn
-        const signInOutput = await signIn({
-          username: email,
-          options: {
-            authFlowType: 'CUSTOM_WITHOUT_SRP',
-          },
-        });
-      
-      return {
-        success: true,
-        message: 'Magic link sent to your email',
-        nextStep: signInOutput.nextStep,
-      };
-    } catch (error: any) {
-      console.error('Error requesting magic link:', error);
-      
-      // Si el usuario no existe, lo creamos primero con signUp
-      if (error.name === 'UserNotFoundException') {
-        try {
-          const { signUp } = await import('aws-amplify/auth');
-          
-          // SignUp sin password (custom auth)
-          const name = email.split('@')[0]; // Usar parte antes del @ como name
-          await signUp({
-            username: email,
-            password: Math.random().toString(36).slice(-16) + 'Aa1!', // Password temporal (no se usa)
-            options: {
-              userAttributes: {
-                email: email,
-                name: name, // Atributo requerido por User Pool
-              },
-              autoSignIn: false, // Deshabilitado para evitar múltiples emails
-            },
-          });
-          
-          // Pequeño delay para que se complete el signUp
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Reintentamos signIn después de crear el usuario
-          const signInOutput = await signIn({
-            username: email,
-            options: {
-              authFlowType: 'CUSTOM_WITHOUT_SRP',
-            },
-          });
-          
-          return {
-            success: true,
-            message: 'Magic link sent to your email',
-            nextStep: signInOutput.nextStep,
-          };
-        } catch (signUpError: any) {
-          console.error('Error creating user:', signUpError);
-          throw signUpError;
-        }
-      }
-      
-        throw error;
-      } finally {
-        // Limpiar solicitud pendiente después de completar
-        pendingRequests.delete(email);
-      }
-    })();
-
-    // Guardar promesa
-    pendingRequests.set(email, request);
-    
-    return request;
+    const response = await api.post('/auth/magic-link/request', { email });
+    return response.data;
   },
   
-  verifyMagicLink: async (email: string, code: string) => {
-    try {
-      // Usar endpoint REST en lugar de Cognito directamente
-      const response = await api.post('/auth/magic-link/verify', { email, code });
-      return response.data;
-    } catch (error: any) {
-      console.error('Error verifying magic link:', error);
-      throw error;
-    }
+  verifyMagicLink: async (token: string) => {
+    const response = await api.post('/auth/magic-link/verify', { token });
+    return response.data;
   },
 };
 

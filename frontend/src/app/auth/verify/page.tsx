@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { signIn, confirmSignIn } from 'aws-amplify/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { StyledButton } from '@/components/StyledButton';
 
@@ -13,36 +12,42 @@ function VerifyMagicLinkContent() {
   const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
-    const email = searchParams.get('email');
-    const code = searchParams.get('code');
+    const token = searchParams.get('token');
 
-    if (!email || !code) {
-      setError('Enlace inválido. Faltan parámetros requeridos.');
+    if (!token) {
+      setError('Enlace inválido. Token no encontrado.');
       setLoading(false);
       return;
     }
 
     // Verificar el magic link automáticamente
-    verifyMagicLink(email, code);
+    verifyMagicLink(token);
   }, [searchParams]);
 
-  const verifyMagicLink = async (email: string, code: string) => {
+  const verifyMagicLink = async (token: string) => {
     try {
       setVerifying(true);
 
-      // Usar endpoint REST para verificar el magic link
+      // Usar endpoint REST para verificar el magic link (MODELO PODCAST PLATFORM)
       const { authApi } = await import('@/lib/api');
-      const response = await authApi.verifyMagicLink(email, code);
+      const response = await authApi.verifyMagicLink(token);
 
       console.log('Verify response:', response);
 
-      if (response.success && response.tokens) {
-        // Guardar tokens en localStorage
-        localStorage.setItem('authToken', response.tokens.accessToken || '');
-        localStorage.setItem('idToken', response.tokens.idToken || '');
+      if (response.success && response.data?.user) {
+        // Guardar user data y tokens (igual que Podcast Platform)
+        localStorage.setItem('userId', response.data.user.id);
+        localStorage.setItem('userEmail', response.data.user.email);
+        localStorage.setItem('username', response.data.user.username);
+        localStorage.setItem('displayName', response.data.user.displayName);
         localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userEmail', email);
-        localStorage.setItem('username', email);
+        
+        // Guardar tokens JWT
+        if (response.data.tokens) {
+          localStorage.setItem('idToken', response.data.tokens.idToken);
+          localStorage.setItem('accessToken', response.data.tokens.accessToken);
+          localStorage.setItem('refreshToken', response.data.tokens.refreshToken);
+        }
 
         // Redirigir al dashboard
         setLoading(false);
@@ -53,7 +58,7 @@ function VerifyMagicLinkContent() {
       }
     } catch (err: any) {
       console.error('Error verifying magic link:', err);
-      setError(err.message || 'Error al verificar el magic link. El enlace puede haber expirado.');
+      setError(err.response?.data?.error?.message || err.message || 'Error al verificar el magic link. El enlace puede haber expirado.');
       setLoading(false);
       setVerifying(false);
     }
