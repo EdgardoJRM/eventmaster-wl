@@ -76,27 +76,35 @@ export default function EventCheckinPage() {
   const startScanner = () => {
     setScanning(true);
     setLastScan(null);
-
-    // Cleanup previous scanner if exists
-    if (scannerRef.current) {
-      scannerRef.current.clear();
-    }
-
-    // Initialize scanner
-    const scanner = new Html5QrcodeScanner(
-      'qr-reader',
-      {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-        rememberLastUsedCamera: true,
-      },
-      false
-    );
-
-    scanner.render(onScanSuccess, onScanError);
-    scannerRef.current = scanner;
   };
+
+  // Initialize scanner when scanning becomes true
+  useEffect(() => {
+    if (scanning && !scannerRef.current) {
+      // Wait for DOM to render qr-reader element
+      setTimeout(() => {
+        const element = document.getElementById('qr-reader');
+        if (!element) {
+          console.error('qr-reader element not found');
+          return;
+        }
+
+        const scanner = new Html5QrcodeScanner(
+          'qr-reader',
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+            rememberLastUsedCamera: true,
+          },
+          false
+        );
+
+        scanner.render(onScanSuccess, onScanError);
+        scannerRef.current = scanner;
+      }, 100);
+    }
+  }, [scanning]);
 
   const stopScanner = () => {
     if (scannerRef.current) {

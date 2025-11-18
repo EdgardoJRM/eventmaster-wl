@@ -414,6 +414,36 @@ export default function EventDetailPage() {
                   </dl>
                 </div>
 
+                {/* Link de Registro Público */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-blue-900 mb-2 flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    Link de Registro Público
+                  </h4>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={`${window.location.origin}/events/${eventId}/register`}
+                      className="flex-1 px-3 py-2 bg-white border border-blue-300 rounded text-sm font-mono"
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/events/${eventId}/register`);
+                        toast.success('Link copiado al portapapeles');
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm font-medium whitespace-nowrap"
+                    >
+                      Copiar Link
+                    </button>
+                  </div>
+                  <p className="text-xs text-blue-700 mt-2">
+                    Comparte este link para que las personas se registren a tu evento
+                  </p>
+                </div>
+
                 <div className="flex space-x-4 pt-4 border-t">
                   <Link
                     href={`/events/${eventId}/edit`}
@@ -422,6 +452,18 @@ export default function EventDetailPage() {
                     Editar Evento
                   </Link>
                   <button
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({
+                          title: event.title,
+                          text: `Regístrate a: ${event.title}`,
+                          url: `${window.location.origin}/events/${eventId}/register`,
+                        });
+                      } else {
+                        navigator.clipboard.writeText(`${window.location.origin}/events/${eventId}/register`);
+                        toast.success('Link copiado');
+                      }
+                    }}
                     className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-md font-medium hover:bg-gray-200 transition"
                   >
                     Compartir

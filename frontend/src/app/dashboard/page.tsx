@@ -110,7 +110,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-center" />
       
-      <BrandedHeader showLogout={true} />
+      <BrandedHeader showLogout={true} showSettings={true} />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -245,24 +245,43 @@ export default function DashboardPage() {
                   )}
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <Link
-                    href={`/events/${event.event_id || event.id}`}
-                    className="flex-1 bg-purple-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-purple-700 transition text-center"
-                  >
-                    Ver detalles
-                  </Link>
+                {/* Action Buttons */}
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Link
+                      href={`/events/${event.event_id || event.id}`}
+                      className="flex-1 bg-purple-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-purple-700 transition text-center"
+                    >
+                      Ver detalles
+                    </Link>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleDeleteEvent(event.event_id || event.id || '', event.title);
+                      }}
+                      className="bg-red-100 hover:bg-red-200 text-red-600 px-3 py-2 rounded-md text-sm font-medium transition"
+                      title="Eliminar evento"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  {/* Copy Registration Link */}
                   <button
                     onClick={(e) => {
                       e.preventDefault();
-                      handleDeleteEvent(event.event_id || event.id || '', event.title);
+                      const registrationLink = `${window.location.origin}/events/${event.event_id || event.id}/register`;
+                      navigator.clipboard.writeText(registrationLink);
+                      toast.success('Link de registro copiado');
                     }}
-                    className="bg-red-100 hover:bg-red-200 text-red-600 px-3 py-2 rounded-md text-sm font-medium transition"
-                    title="Eliminar evento"
+                    className="w-full flex items-center justify-center space-x-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-md text-sm font-medium transition border border-blue-200"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
+                    <span>Copiar link de registro</span>
                   </button>
                 </div>
               </div>
