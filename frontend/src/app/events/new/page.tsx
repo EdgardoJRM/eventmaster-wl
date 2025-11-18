@@ -36,7 +36,7 @@ export default function NewEventPage() {
     try {
       const response = await eventsApi.create({
         ...formData,
-        capacity: formData.capacity ? parseInt(formData.capacity) : null,
+        capacity: formData.capacity ? parseInt(formData.capacity) : 0,
       });
 
       if (response.success) {
