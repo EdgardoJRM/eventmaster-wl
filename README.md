@@ -1,254 +1,274 @@
 # EventMaster - White Label Event Management Platform
 
-Plataforma SaaS para gestión de eventos con sistema de check-in QR, registro de participantes y analíticas en tiempo real.
+Plataforma SaaS multi-tenant para gestión de eventos con autenticación Magic Link, check-in QR, registro de participantes y analíticas en tiempo real.
 
-## 🚀 Características
+## 🎉 Estado del Proyecto
 
-- **Autenticación Magic Link**: Login sin contraseñas via email
-- **Gestión de Eventos**: Crear, editar y eliminar eventos
-- **Check-in QR**: Sistema de check-in con códigos QR
-- **Participantes**: Registro y gestión de participantes
-- **Dashboard**: Vista general con estadísticas y eventos recientes
-- **Responsive**: Diseño mobile-first completamente responsive
+**✅ COMPLETADO Y FUNCIONAL**
+
+- ✅ Autenticación Magic Link (Cognito + SES)
+- ✅ Auto-creación de usuarios
+- ✅ Dashboard con gestión de eventos
+- ✅ CORS configurado
+- ✅ Deploy en AWS Amplify
+- ✅ Multi-tenant support
+- ✅ Arquitectura serverless completa
+
+**🌐 App en Producción:** https://main.d14jon4zzm741k.amplifyapp.com
+
+---
+
+## 🚀 Quick Start
+
+### Desarrollo Local
+
+```bash
+# Instalar dependencias
+npm install
+
+# Iniciar desarrollo
+npm run dev
+
+# Navegar a http://localhost:3000
+```
+
+### Variables de Entorno
+
+Crea `.env.local` en `/frontend`:
+
+```bash
+NEXT_PUBLIC_API_URL=https://h1g8k47icl.execute-api.us-east-1.amazonaws.com/prod
+NEXT_PUBLIC_USER_POOL_ID=us-east-1_BnjZCmw7O
+NEXT_PUBLIC_USER_POOL_CLIENT_ID=5h866q6llftkq2lhidqbm4pntc
+NEXT_PUBLIC_AWS_REGION=us-east-1
+```
+
+---
 
 ## 🏗️ Arquitectura
 
 ### Frontend
-- **Framework**: Next.js 15 con App Router
-- **Styling**: Tailwind CSS 4
-- **Auth**: Magic Link (Cognito + SES)
-- **State**: React Hooks + localStorage
-- **API Client**: Axios con interceptores
+- **Framework:** Next.js 15 (App Router, SSR)
+- **Styling:** Tailwind CSS v3
+- **Auth:** Magic Link (Cognito Custom Auth)
+- **API Client:** Axios con interceptores
+- **Deploy:** AWS Amplify
 
 ### Backend
-- **Runtime**: AWS Lambda (Node.js)
-- **API**: API Gateway REST
-- **Database**: PostgreSQL (RDS)
-- **Auth**: AWS Cognito
-- **Email**: AWS SES
-- **Storage**: S3 para archivos
+- **Runtime:** AWS Lambda (Node.js)
+- **API:** API Gateway REST
+- **Database:** PostgreSQL (RDS)
+- **Auth:** AWS Cognito (Custom Auth Flow)
+- **Email:** AWS SES (soporte@edgardohernandez.com)
+- **Storage:** S3
 
-## 📦 Instalación
+---
 
-```bash
-# Clonar repositorio
-git clone <repository-url>
-cd events
-
-# Instalar dependencias
-npm install
-
-# Copiar variables de entorno
-cp .env.example .env.local
-
-# Configurar variables de entorno
-# Editar .env.local con tus valores
-
-# Iniciar desarrollo
-npm run dev
-```
-
-## 🔧 Variables de Entorno
-
-Crea un archivo `.env.local` en el directorio `frontend/`:
-
-```bash
-NEXT_PUBLIC_API_URL=https://your-api.execute-api.us-east-1.amazonaws.com/dev
-NEXT_PUBLIC_USER_POOL_ID=us-east-1_xxxxxxxxx
-NEXT_PUBLIC_USER_POOL_CLIENT_ID=xxxxxxxxxxxxxxxxxx
-NEXT_PUBLIC_AWS_REGION=us-east-1
-```
-
-## 🎯 Estructura del Proyecto
+## 📁 Estructura del Proyecto
 
 ```
 events/
-├── frontend/                 # Aplicación Next.js
+├── frontend/                 # Next.js App
 │   ├── src/
-│   │   ├── app/             # App Router pages
-│   │   │   ├── dashboard/   # Dashboard principal
-│   │   │   ├── events/      # Gestión de eventos
-│   │   │   ├── verify/      # Verificación magic link
-│   │   │   ├── layout.tsx   # Layout principal
-│   │   │   └── page.tsx     # Landing/Login page
-│   │   ├── components/      # Componentes reutilizables
-│   │   ├── lib/
-│   │   │   └── api.ts       # Cliente API con interceptores
-│   │   ├── config.ts        # Configuración centralizada
-│   │   └── middleware.ts    # Next.js middleware
-│   ├── public/              # Assets estáticos
-│   ├── next.config.js       # Configuración Next.js
+│   │   ├── app/
+│   │   │   ├── page.tsx              # Login (Magic Link)
+│   │   │   ├── auth/verify/          # Verificación Magic Link
+│   │   │   ├── dashboard/            # Dashboard principal
+│   │   │   ├── events/new/           # Crear evento
+│   │   │   ├── [tenantSlug]/         # Rutas multi-tenant
+│   │   │   └── layout.tsx
+│   │   ├── components/               # Componentes reutilizables
+│   │   ├── contexts/                 # React Context (Theme)
+│   │   ├── hooks/                    # Custom hooks (useTenant)
+│   │   ├── lib/api.ts                # API Client
+│   │   └── config.ts                 # Configuración
+│   ├── public/
+│   ├── next.config.js
 │   └── package.json
-├── backend/                  # Lambda functions
-│   ├── src/
-│   │   ├── functions/       # Lambda handlers
-│   │   │   ├── auth/        # Autenticación
-│   │   │   ├── events/      # CRUD eventos
-│   │   │   ├── participants/# Gestión participantes
-│   │   │   └── checkin/     # Sistema check-in
-│   │   └── utils/           # Utilidades compartidas
-│   └── package.json
-├── infrastructure/           # IaC (CDK)
-├── amplify.yml              # Configuración AWS Amplify
-└── package.json             # Scripts raíz
+├── backend/                  # Lambda Functions
+│   └── src/functions/
+│       ├── auth/                     # Cognito Triggers
+│       │   ├── pre-signup-simple.ts
+│       │   ├── create-auth-challenge.ts
+│       │   ├── define-auth-challenge.ts
+│       │   ├── verify-auth-challenge.ts
+│       │   └── verify-magic-link.ts  # REST endpoint
+│       ├── events/                   # CRUD eventos
+│       └── shared/utils.ts
+├── docs/                     # Documentación
+│   ├── archive/              # Docs históricas (66 archivos)
+│   └── ...
+├── amplify.yml               # AWS Amplify config
+└── package.json
 ```
 
-## 🔑 Flujo de Autenticación
+---
 
-1. Usuario ingresa email en landing page
-2. Backend envía magic link via SES
-3. Usuario hace click en el link
-4. `/verify?token=xxx` valida el token
-5. Sistema guarda sesión en localStorage
-6. Redirect automático a `/dashboard`
+## 🔑 Flujo de Autenticación (Magic Link)
 
-## 🎨 Páginas Principales
+1. Usuario ingresa email en `/`
+2. Frontend llama `authApi.requestMagicLink(email)`
+3. Si usuario no existe → `signUp` (auto-crea)
+4. `signIn` con `CUSTOM_WITHOUT_SRP`
+5. Cognito invoca `CreateAuthChallenge` Lambda
+6. Lambda envía email con magic link via SES
+7. Usuario hace click → `/auth/verify?email=xxx&code=xxx`
+8. Frontend llama REST endpoint `/auth/magic-link/verify`
+9. Lambda verifica código y retorna tokens
+10. Frontend guarda tokens en `localStorage`
+11. Redirect a `/dashboard`
 
-### Landing (`/`)
-- Formulario de login con magic link
-- Cards de features
-- Auto-redirect si ya está autenticado
+**Protecciones:**
+- ✅ Deduplicación de requests (Map de promesas)
+- ✅ Solo 1 email por session (check `session.length === 0`)
+- ✅ `autoSignIn: false` para evitar múltiples invocaciones
+- ✅ Delay de 1s entre `signUp` y `signIn`
 
-### Verify (`/verify`)
-- Verificación de token de magic link
-- Estados: verifying, success, error
-- Feedback visual con animaciones
-
-### Dashboard (`/dashboard`)
-- Lista de eventos en grid
-- Header con user info y logout
-- Crear nuevo evento
-- Ver detalles / Eliminar eventos
-- Estado vacío con CTA
-
-### Events
-- `/events/new` - Crear evento
-- `/events/{id}` - Detalles del evento
-- `/events/{id}/edit` - Editar evento
-- `/events/{id}/checkin` - Check-in QR
-- `/events/{id}/participants` - Lista de participantes
-
-## 🛠️ Scripts Disponibles
-
-```bash
-# Desarrollo
-npm run dev              # Inicia servidor de desarrollo
-
-# Producción
-npm run build            # Build para producción
-npm run start            # Servidor de producción
-
-# Otros
-npm run postinstall      # Instala deps del frontend
-```
+---
 
 ## 📡 API Endpoints
 
 ### Autenticación
-```
-POST /auth/magic-link/request
-POST /auth/magic-link/verify
-```
+- `POST /auth/magic-link/verify` - Verificar magic link y obtener tokens
 
 ### Eventos
-```
-GET    /events                  # Lista de eventos
-POST   /events                  # Crear evento
-GET    /events/{id}            # Detalles del evento
-PUT    /events/{id}            # Actualizar evento
-DELETE /events/{id}            # Eliminar evento
-```
+- `GET /events` - Lista de eventos (requiere auth)
+- `POST /events` - Crear evento
+- `GET /events/{id}` - Detalles
+- `PUT /events/{id}` - Actualizar
+- `DELETE /events/{id}` - Eliminar
 
-### Participantes
-```
-GET    /events/{id}/participants                        # Lista participantes
-POST   /events/{id}/participants                        # Registrar participante
-POST   /events/{id}/participants/{participantId}/checkin # Check-in
-```
-
-### Upload
-```
-POST /upload   # Obtener presigned URL para S3
-```
-
-## 🎨 Diseño
-
-- **Paleta de Colores**: Purple/Blue gradient
-- **Iconografía**: Heroicons via SVG
-- **Tipografía**: Inter (Google Fonts)
-- **Componentes**: Tailwind CSS utility-first
-- **Animaciones**: CSS transitions + Tailwind
-
-## 🚀 Deploy en AWS Amplify
-
-1. Conecta el repositorio a AWS Amplify
-2. Configura las variables de entorno
-3. Amplify detecta automáticamente `amplify.yml`
-4. Build y deploy automático en cada push
-
-### Variables de Entorno en Amplify
-```
-NEXT_PUBLIC_API_URL
-NEXT_PUBLIC_USER_POOL_ID
-NEXT_PUBLIC_USER_POOL_CLIENT_ID
-NEXT_PUBLIC_AWS_REGION
-```
-
-## 🔒 Seguridad
-
-- ✅ Auth con JWT tokens
-- ✅ HTTPS obligatorio
-- ✅ CORS configurado
-- ✅ Tokens en localStorage (considerar httpOnly cookies)
-- ✅ Validación de inputs
-- ✅ Rate limiting en API Gateway
-
-## 📊 Estado del Proyecto
-
-### ✅ Completado
-- [x] Estructura frontend base
-- [x] Sistema de autenticación magic link
-- [x] Dashboard con lista de eventos
-- [x] Configuración API client
-- [x] Middleware y routing
-- [x] Página de verificación
-- [x] Layout y estilos base
-
-### 🚧 En Progreso
-- [ ] Página de creación de eventos
-- [ ] Página de detalles de evento
-- [ ] Sistema de check-in QR
-- [ ] Lista de participantes
-
-### 📋 Por Hacer
-- [ ] Backend Lambda functions
-- [ ] Base de datos schema
-- [ ] Infraestructura CDK
-- [ ] Tests unitarios
-- [ ] Tests E2E
-- [ ] CI/CD pipeline
-- [ ] Documentación API
-
-## 🤝 Contribuir
-
-1. Fork el proyecto
-2. Crea una rama (`git checkout -b feature/AmazingFeature`)
-3. Commit cambios (`git commit -m 'Add AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📝 Licencia
-
-MIT License - ver `LICENSE` file para detalles
-
-## 👥 Equipo
-
-- **Desarrollador Principal**: [Tu Nombre]
-
-## 📞 Soporte
-
-Para soporte, email: support@eventmaster.com
+### Público (Multi-tenant)
+- `GET /public/tenants/{tenantSlug}` - Info del tenant
+- `GET /public/tenants/{tenantSlug}/events/{eventSlug}` - Evento público
 
 ---
 
-**Hecho con ❤️ usando Next.js y AWS**
+## 🎨 Páginas Funcionales
+
+| Ruta | Descripción | Estado |
+|------|-------------|--------|
+| `/` | Login con Magic Link | ✅ |
+| `/auth/verify` | Verificar Magic Link | ✅ |
+| `/dashboard` | Dashboard principal | ✅ |
+| `/events/new` | Crear evento | ✅ |
+| `/[tenantSlug]/evento/[eventSlug]` | Página pública de evento | ✅ |
+| `/settings/branding` | Configurar branding | ✅ |
+
+---
+
+## 🚀 Deploy en AWS Amplify
+
+El proyecto está configurado para deploy automático en Amplify:
+
+### Configuración Actual
+- **App ID:** `d14jon4zzm741k`
+- **Branch:** `main`
+- **Framework:** Next.js SSR (monorepo)
+- **Build Command:** `npm run build`
+- **Output:** `.next`
+
+### Variables de Entorno en Amplify Console
+```
+AMPLIFY_MONOREPO_APP_ROOT=frontend
+NEXT_PUBLIC_API_URL=https://h1g8k47icl.execute-api.us-east-1.amazonaws.com/prod
+NEXT_PUBLIC_USER_POOL_ID=us-east-1_BnjZCmw7O
+NEXT_PUBLIC_USER_POOL_CLIENT_ID=5h866q6llftkq2lhidqbm4pntc
+NEXT_PUBLIC_AWS_REGION=us-east-1
+```
+
+### Auto-deploy
+- ✅ Push a `main` → Build automático
+- ✅ Build tarda ~2-3 minutos
+- ✅ `amplify.yml` configura monorepo
+
+---
+
+## 🛠️ Scripts Disponibles
+
+```bash
+# Root
+npm run dev          # cd frontend && npm run dev
+npm run build        # cd frontend && npm run build
+npm run start        # cd frontend && npm run start
+npm run postinstall  # cd frontend && npm install
+
+# Frontend (cd frontend/)
+npm run dev          # Next.js dev server (localhost:3000)
+npm run build        # Production build
+npm run start        # Production server
+npm run lint         # ESLint
+```
+
+---
+
+## 🔒 Seguridad
+
+- ✅ JWT tokens (Cognito)
+- ✅ HTTPS obligatorio
+- ✅ CORS configurado en API Gateway
+- ✅ Magic Link expira en 15 minutos
+- ✅ Validación de inputs (backend)
+- ✅ Rate limiting (API Gateway)
+- ✅ Tokens en localStorage (considerar httpOnly cookies futuro)
+
+---
+
+## 🐛 Troubleshooting
+
+### Build falla en Amplify
+- Verificar `amplify.yml` tiene `applications: [appRoot: frontend]`
+- Verificar `--legacy-peer-deps` en npm install
+
+### CORS error en dashboard
+- Verificar API Gateway OPTIONS method configurado
+- Verificar deployment a stage `prod`
+
+### Magic link no llega
+- Verificar dominio `edgardohernandez.com` verificado en SES
+- Verificar email `soporte@edgardohernandez.com` verificado
+- Revisar CloudWatch logs de `CreateAuthChallenge` Lambda
+
+### Múltiples emails
+- Verificar Lambda solo envía email cuando `session.length === 0`
+- Verificar frontend usa deduplicación (pendingRequests Map)
+
+---
+
+## 📚 Documentación Adicional
+
+Toda la documentación histórica del proyecto (66 archivos) está en:
+
+```
+/docs/archive/
+```
+
+Incluye:
+- Guías de setup
+- Fixes de Amplify
+- Configuración de SES/SNS
+- Status históricos
+- Troubleshooting guides
+
+---
+
+## 🎯 Próximos Pasos
+
+- [ ] Check-in QR system
+- [ ] Gestión de participantes
+- [ ] Email templates personalizables
+- [ ] Analytics dashboard
+- [ ] Tests E2E
+- [ ] CI/CD pipeline
+
+---
+
+## 📝 Licencia
+
+MIT License
+
+---
+
+**Built with ❤️ using Next.js, AWS Lambda, and Cognito**
+
+**Live App:** https://main.d14jon4zzm741k.amplifyapp.com 🚀
