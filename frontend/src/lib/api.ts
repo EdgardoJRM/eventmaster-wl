@@ -70,11 +70,12 @@ export const authApi = {
                 email: email,
                 name: name, // Atributo requerido por User Pool
               },
-              autoSignIn: {
-                enabled: true,
-              },
+              autoSignIn: false, // Deshabilitado para evitar múltiples emails
             },
           });
+          
+          // Pequeño delay para que se complete el signUp
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
           // Reintentamos signIn después de crear el usuario
           const signInOutput = await signIn({
