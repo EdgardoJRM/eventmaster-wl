@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { eventsApi } from '@/lib/api';
 import { StyledButton } from '@/components/StyledButton';
 import toast, { Toaster } from 'react-hot-toast';
+import { BrandedHeader } from '@/components/BrandedHeader';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function NewEventPage() {
   const [step, setStep] = useState(1);
@@ -89,21 +91,13 @@ export default function NewEventPage() {
     }
   };
 
+  const { branding } = useTheme();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-center" />
       
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <button onClick={() => router.push('/dashboard')} className="text-purple-600 hover:text-purple-700 font-medium">
-                ← Dashboard
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <BrandedHeader showBackButton={true} backHref="/dashboard" title="Crear Nuevo Evento" />
 
       <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">

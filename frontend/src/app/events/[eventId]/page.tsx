@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { eventsApi, participantsApi } from '@/lib/api';
 import toast, { Toaster } from 'react-hot-toast';
 import Link from 'next/link';
+import { BrandedHeader } from '@/components/BrandedHeader';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface Event {
   event_id: string;
@@ -228,32 +230,25 @@ export default function EventDetailPage() {
     ? Math.round((event.checked_in_count / event.registered_count) * 100)
     : 0;
 
+  const { branding } = useTheme();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-center" />
       
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="text-purple-600 hover:text-purple-700 font-medium"
-            >
-              ← Volver al Dashboard
-            </button>
-            <div className="flex items-center space-x-3">
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                event.status === 'published' 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-yellow-100 text-yellow-800'
-              }`}>
-                {event.status === 'published' ? 'Publicado' : 'Borrador'}
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <BrandedHeader 
+        showBackButton={true} 
+        backHref="/dashboard"
+        title={event.title}
+      >
+        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+          event.status === 'published' 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-yellow-100 text-yellow-800'
+        }`}>
+          {event.status === 'published' ? 'Publicado' : 'Borrador'}
+        </span>
+      </BrandedHeader>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

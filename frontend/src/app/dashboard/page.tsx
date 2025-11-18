@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { eventsApi } from '@/lib/api';
 import toast, { Toaster } from 'react-hot-toast';
 import Link from 'next/link';
+import { BrandedHeader } from '@/components/BrandedHeader';
+import { StatsCard } from '@/components/StatsCard';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface Event {
   event_id: string;
@@ -95,38 +98,66 @@ export default function DashboardPage() {
     router.push('/');
   };
 
+  const { branding } = useTheme();
+
+  // Calcular stats
+  const totalEvents = events.length;
+  const activeEvents = events.filter(e => e.status === 'published').length;
+  const totalRegistrations = events.reduce((sum, e) => sum + (e.registered_count || 0), 0);
+  const totalCheckins = events.reduce((sum, e) => sum + (e.checked_in_count || e.checkin_count || 0), 0);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-center" />
       
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">EventMaster</h1>
-                <p className="text-sm text-gray-600">{userEmail}</p>
-              </div>
-            </div>
-            
-            <button
-              onClick={handleLogout}
-              className="text-gray-600 hover:text-gray-900 font-medium text-sm"
-            >
-              Cerrar sesión
-            </button>
-          </div>
-        </div>
-      </header>
+      <BrandedHeader showLogout={true} />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatsCard
+            title="Total Eventos"
+            value={totalEvents}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            }
+            color="primary"
+          />
+          <StatsCard
+            title="Eventos Activos"
+            value={activeEvents}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+            color="success"
+          />
+          <StatsCard
+            title="Total Registros"
+            value={totalRegistrations}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            }
+            color="accent"
+          />
+          <StatsCard
+            title="Check-ins"
+            value={totalCheckins}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            }
+            color="warning"
+          />
+        </div>
+
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Mis Eventos</h2>
@@ -135,7 +166,8 @@ export default function DashboardPage() {
           
           <Link
             href="/events/new"
-            className="bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition flex items-center space-x-2"
+            className="btn-primary flex items-center space-x-2 shadow-lg"
+            style={{ backgroundColor: branding?.primary_color }}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
