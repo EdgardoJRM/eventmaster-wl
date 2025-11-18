@@ -6,6 +6,8 @@ import { eventsApi, participantsApi } from '@/lib/api';
 import toast, { Toaster } from 'react-hot-toast';
 import Link from 'next/link';
 import { QRCodeDisplay } from '@/components/QRCodeDisplay';
+import { useTheme } from '@/contexts/ThemeContext';
+import api from '@/lib/api';
 
 interface Event {
   event_id: string;
@@ -64,6 +66,7 @@ export default function EventRegisterPage() {
   const router = useRouter();
   const params = useParams();
   const eventId = params.eventId as string;
+  const { branding } = useTheme();
   
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +75,7 @@ export default function EventRegisterPage() {
   const [success, setSuccess] = useState(false);
   const [registrationData, setRegistrationData] = useState<RegistrationResult | null>(null);
   const [resendingEmail, setResendingEmail] = useState(false);
+  const [tenantBranding, setTenantBranding] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -109,6 +113,19 @@ export default function EventRegisterPage() {
         }
         
         setEvent(eventData);
+        
+        // Cargar branding del tenant (público, sin auth)
+        if (eventData.tenant_id) {
+          try {
+            const brandingResponse = await api.get(`/public/tenant/${eventData.tenant_id}/branding`);
+            if (brandingResponse.data.success && brandingResponse.data.data) {
+              setTenantBranding(brandingResponse.data.data);
+            }
+          } catch (err) {
+            console.error('Error loading tenant branding:', err);
+            // No es crítico, continuar sin branding
+          }
+        }
       } else {
         setError('Evento no encontrado');
       }
@@ -248,9 +265,27 @@ export default function EventRegisterPage() {
   const isFull = event.capacity > 0 && event.registered_count >= event.capacity;
   const spotsLeft = event.capacity > 0 ? event.capacity - event.registered_count : null;
 
+  // Usar branding del tenant o fallback al global o default
+  const primaryColor = tenantBranding?.primary_color || branding?.primary_color || '#9333ea';
+  const accentColor = tenantBranding?.accent_color || branding?.accent_color || '#3b82f6';
+  const logoUrl = tenantBranding?.logo_url || branding?.logo_url;
+  const tenantName = tenantBranding?.tenant_name || branding?.tenant_name || 'EventMaster';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+    <div className="min-h-screen bg-gray-50">
       <Toaster position="top-center" />
+      
+      {/* Tenant Header */}
+      {logoUrl && (
+        <header className="bg-white shadow-sm border-b-2" style={{ borderBottomColor: primaryColor }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-center space-x-3">
+              <img src={logoUrl} alt={tenantName} className="h-12 w-auto" />
+              <h1 className="text-2xl font-bold" style={{ color: primaryColor }}>{tenantName}</h1>
+            </div>
+          </div>
+        </header>
+      )}
       
       {/* Header Banner */}
       {event.banner_image_url && (
@@ -508,7 +543,10 @@ export default function EventRegisterPage() {
                 <button
                   type="submit"
                   disabled={submitting || (isFull && !event.waitlist_enabled)}
-                  className="w-full bg-purple-600 text-white py-3 rounded-md font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  className="w-full text-white py-3 rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  style={{
+                    backgroundColor: primaryColor,
+                  }}
                 >
                   {submitting ? 'Registrando...' : isFull && event.waitlist_enabled ? 'Unirse a Lista de Espera' : 'Registrarse Ahora'}
                 </button>
