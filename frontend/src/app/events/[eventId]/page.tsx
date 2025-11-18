@@ -35,9 +35,12 @@ interface Participant {
   name: string;
   email: string;
   phone?: string;
+  registration_number: string;
+  status: string;
   registered_at: number;
   checked_in: boolean;
-  checked_in_at?: number;
+  checkin_time?: number;
+  custom_data?: Record<string, any>;
 }
 
 export default function EventDetailPage() {
@@ -47,8 +50,11 @@ export default function EventDetailPage() {
 
   const [event, setEvent] = useState<Event | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [filteredParticipants, setFilteredParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'details' | 'participants'>('details');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'checked_in' | 'pending' | 'waitlist'>('all');
 
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('isAuthenticated');
@@ -61,6 +67,34 @@ export default function EventDetailPage() {
       loadEventData();
     }
   }, [eventId, router]);
+
+  // Filter participants when search or filter changes
+  useEffect(() => {
+    let filtered = [...participants];
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'checked_in') {
+        filtered = filtered.filter(p => p.checked_in);
+      } else if (statusFilter === 'pending') {
+        filtered = filtered.filter(p => !p.checked_in && p.status === 'registered');
+      } else if (statusFilter === 'waitlist') {
+        filtered = filtered.filter(p => p.status === 'waitlist');
+      }
+    }
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(term) ||
+        p.email.toLowerCase().includes(term) ||
+        p.registration_number.toLowerCase().includes(term)
+      );
+    }
+
+    setFilteredParticipants(filtered);
+  }, [participants, searchTerm, statusFilter]);
 
   const loadEventData = async () => {
     try {
@@ -97,6 +131,49 @@ export default function EventDetailPage() {
       console.error('Error checking in:', error);
       toast.error('Error al realizar check-in');
     }
+  };
+
+  const exportToCSV = () => {
+    if (filteredParticipants.length === 0) {
+      toast.error('No hay participantes para exportar');
+      return;
+    }
+
+    // CSV Header
+    const headers = ['Nombre', 'Email', 'Teléfono', 'Número de Registro', 'Estado', 'Check-in', 'Fecha Registro', 'Fecha Check-in'];
+    
+    // CSV Rows
+    const rows = filteredParticipants.map(p => [
+      p.name,
+      p.email,
+      p.phone || '',
+      p.registration_number,
+      p.status === 'waitlist' ? 'Lista de Espera' : 'Registrado',
+      p.checked_in ? 'Sí' : 'No',
+      new Date(p.registered_at * 1000).toLocaleString('es-ES'),
+      p.checkin_time ? new Date(p.checkin_time * 1000).toLocaleString('es-ES') : ''
+    ]);
+
+    // Build CSV content
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Create download
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `participantes-${event?.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success(`${filteredParticipants.length} participantes exportados`);
   };
 
   const formatDate = (timestamp: number) => {
@@ -357,14 +434,85 @@ export default function EventDetailPage() {
                 </div>
               </div>
             ) : (
-              <div>
-                {participants.length === 0 ? (
-                  <div className="text-center py-12">
+              <div className="space-y-6">
+                {/* Search and Filter Bar */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {/* Search */}
+                  <div className="flex-1">
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                        placeholder="Buscar por nombre, email o número de registro..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Status Filter */}
+                  <div className="sm:w-48">
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value as any)}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                    >
+                      <option value="all">Todos ({participants.length})</option>
+                      <option value="checked_in">Check-in realizado ({participants.filter(p => p.checked_in).length})</option>
+                      <option value="pending">Pendientes ({participants.filter(p => !p.checked_in && p.status === 'registered').length})</option>
+                      <option value="waitlist">Lista de espera ({participants.filter(p => p.status === 'waitlist').length})</option>
+                    </select>
+                  </div>
+
+                  {/* Export Button */}
+                  <button
+                    onClick={exportToCSV}
+                    disabled={filteredParticipants.length === 0}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Exportar CSV
+                  </button>
+                </div>
+
+                {/* Results Count */}
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-700">
+                    Mostrando <span className="font-medium">{filteredParticipants.length}</span> de{' '}
+                    <span className="font-medium">{participants.length}</span> participantes
+                  </p>
+                  <Link
+                    href={`/events/${eventId}/checkin`}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                    Scanner QR
+                  </Link>
+                </div>
+
+                {/* Participants Table */}
+                {filteredParticipants.length === 0 ? (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg">
                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No hay participantes</h3>
-                    <p className="mt-1 text-sm text-gray-500">Aún no hay participantes registrados en este evento.</p>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">
+                      {participants.length === 0 ? 'No hay participantes' : 'No se encontraron participantes'}
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      {participants.length === 0 
+                        ? 'Aún no hay participantes registrados en este evento.' 
+                        : 'Intenta con otro filtro o término de búsqueda.'}
+                    </p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -375,54 +523,95 @@ export default function EventDetailPage() {
                             Participante
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Email
+                            Contacto
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Teléfono
+                            Registro #
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Estado
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Check-in
+                          </th>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Acciones
                           </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {participants.map((participant) => (
-                          <tr key={participant.participant_id}>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                        {filteredParticipants.map((participant) => (
+                          <tr key={participant.participant_id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4">
                               <div className="text-sm font-medium text-gray-900">{participant.name}</div>
-                              <div className="text-sm text-gray-500">
-                                Registrado: {new Date(participant.registered_at * 1000).toLocaleDateString()}
+                              <div className="text-xs text-gray-500">
+                                {new Date(participant.registered_at * 1000).toLocaleDateString('es-ES', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {participant.email}
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-gray-900">{participant.email}</div>
+                              {participant.phone && (
+                                <div className="text-xs text-gray-500">{participant.phone}</div>
+                              )}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {participant.phone || '-'}
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-xs font-mono text-gray-700 bg-gray-100 px-2 py-1 rounded">
+                                {participant.registration_number}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {participant.status === 'waitlist' ? (
+                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                                  Lista de Espera
+                                </span>
+                              ) : (
+                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                  Registrado
+                                </span>
+                              )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               {participant.checked_in ? (
-                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                  ✓ Check-in realizado
-                                </span>
+                                <div>
+                                  <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    ✓ Realizado
+                                  </span>
+                                  {participant.checkin_time && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {new Date(participant.checkin_time * 1000).toLocaleTimeString('es-ES', {
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
                               ) : (
                                 <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                   Pendiente
                                 </span>
                               )}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              {!participant.checked_in && (
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                              {!participant.checked_in && participant.status !== 'waitlist' && (
                                 <button
                                   onClick={() => handleCheckIn(participant.participant_id)}
-                                  className="text-purple-600 hover:text-purple-900"
+                                  className="text-purple-600 hover:text-purple-900 font-medium"
+                                  title="Hacer check-in"
                                 >
-                                  Hacer Check-in
+                                  Check-in
                                 </button>
                               )}
+                              <button
+                                onClick={() => toast('Función de reenviar QR próximamente', { icon: '📧' })}
+                                className="text-blue-600 hover:text-blue-900 font-medium"
+                                title="Reenviar QR"
+                              >
+                                Reenviar QR
+                              </button>
                             </td>
                           </tr>
                         ))}
