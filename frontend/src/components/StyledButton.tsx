@@ -23,19 +23,19 @@ export function StyledButton({
   }
 
   // Si hay theme y useThemeColors es true, usar colores dinámicos
-  if (theme && useThemeColors) {
+  if (theme && theme.branding && useThemeColors) {
     const styles = {
       primary: {
-        backgroundColor: theme.primaryColor,
+        backgroundColor: theme.branding.primary_color,
         color: '#ffffff',
       },
       secondary: {
-        backgroundColor: theme.secondaryColor,
-        color: theme.primaryColor,
+        backgroundColor: theme.branding.secondary_color,
+        color: theme.branding.primary_color,
       },
       outline: {
-        border: `2px solid ${theme.primaryColor}`,
-        color: theme.primaryColor,
+        border: `2px solid ${theme.branding.primary_color}`,
+        color: theme.branding.primary_color,
         backgroundColor: 'transparent',
       },
     };

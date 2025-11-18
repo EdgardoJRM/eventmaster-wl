@@ -110,7 +110,7 @@ export default function PublicEventPage() {
             {tenant.logo_url ? (
               <img src={tenant.logo_url} alt={tenant.name} className="h-10" />
             ) : (
-              <h1 className="text-xl font-bold" style={{ color: theme.primaryColor }}>
+              <h1 className="text-xl font-bold" style={{ color: theme.branding?.primary_color || '#9333ea' }}>
                 {tenant.name}
               </h1>
             )}
@@ -191,7 +191,7 @@ export default function PublicEventPage() {
                 <button
                   onClick={() => setShowRegistration(true)}
                   className="px-8 py-4 text-white rounded-lg font-medium text-lg transition hover:opacity-90"
-                  style={{ backgroundColor: theme.primaryColor }}
+                  style={{ backgroundColor: theme.branding?.primary_color || '#9333ea' }}
                 >
                   {event.is_full ? 'Unirse a lista de espera' : 'Registrarse al evento'}
                 </button>
@@ -251,7 +251,7 @@ export default function PublicEventPage() {
                   type="submit"
                   disabled={registering}
                   className="flex-1 px-4 py-3 text-white rounded-lg font-medium transition hover:opacity-90 disabled:opacity-50"
-                  style={{ backgroundColor: theme.primaryColor }}
+                  style={{ backgroundColor: theme.branding?.primary_color || '#9333ea' }}
                 >
                   {registering ? 'Registrando...' : 'Confirmar registro'}
                 </button>
