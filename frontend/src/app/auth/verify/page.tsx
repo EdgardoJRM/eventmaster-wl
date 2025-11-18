@@ -30,39 +30,27 @@ function VerifyMagicLinkContent() {
     try {
       setVerifying(true);
 
-      // Iniciar custom auth flow
-      const signInOutput = await signIn({
-        username: email,
-        options: {
-          authFlowType: 'CUSTOM_WITHOUT_SRP',
-        },
-      });
+      // Usar endpoint REST para verificar el magic link
+      const { authApi } = await import('@/lib/api');
+      const response = await authApi.verifyMagicLink(email, code);
 
-      console.log('SignIn output:', signInOutput);
+      console.log('Verify response:', response);
 
-      // Si el signIn requiere un challenge, responder con el código del magic link
-      if (signInOutput.nextStep?.signInStep === 'CONFIRM_SIGN_IN_WITH_CUSTOM_CHALLENGE') {
-        await confirmSignIn({
-          challengeResponse: code,
-        });
-      }
-
-      // Guardar tokens en localStorage
-      const { fetchAuthSession } = await import('aws-amplify/auth');
-      const session = await fetchAuthSession();
-      
-      if (session.tokens) {
-        localStorage.setItem('authToken', session.tokens.accessToken?.toString() || '');
-        localStorage.setItem('idToken', session.tokens.idToken?.toString() || '');
+      if (response.success && response.tokens) {
+        // Guardar tokens en localStorage
+        localStorage.setItem('authToken', response.tokens.accessToken || '');
+        localStorage.setItem('idToken', response.tokens.idToken || '');
         localStorage.setItem('isAuthenticated', 'true');
-        if (email) {
-          localStorage.setItem('userEmail', email);
-          localStorage.setItem('username', email);
-        }
-      }
+        localStorage.setItem('userEmail', email);
+        localStorage.setItem('username', email);
 
-      // Redirigir al dashboard
-      router.push('/dashboard');
+        // Redirigir al dashboard
+        setLoading(false);
+        setVerifying(false);
+        router.push('/dashboard');
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (err: any) {
       console.error('Error verifying magic link:', err);
       setError(err.message || 'Error al verificar el magic link. El enlace puede haber expirado.');

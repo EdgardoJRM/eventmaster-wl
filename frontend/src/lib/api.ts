@@ -99,17 +99,11 @@ export const authApi = {
     }
   },
   
-  verifyMagicLink: async (code: string) => {
+  verifyMagicLink: async (email: string, code: string) => {
     try {
-      // Verifica el código del magic link
-      const confirmOutput = await confirmSignIn({
-        challengeResponse: code,
-      });
-      
-      return {
-        success: true,
-        user: confirmOutput,
-      };
+      // Usar endpoint REST en lugar de Cognito directamente
+      const response = await api.post('/auth/magic-link/verify', { email, code });
+      return response.data;
     } catch (error: any) {
       console.error('Error verifying magic link:', error);
       throw error;
