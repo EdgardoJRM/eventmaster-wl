@@ -1,35 +1,20 @@
 'use client';
 
-import { useTheme } from '../contexts/ThemeContext';
-
 interface StyledButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline';
   children: React.ReactNode;
 }
 
 export function StyledButton({ variant = 'primary', children, className = '', ...props }: StyledButtonProps) {
-  const theme = useTheme();
-
-  const styles = {
-    primary: {
-      backgroundColor: theme.primaryColor,
-      color: '#ffffff',
-    },
-    secondary: {
-      backgroundColor: theme.secondaryColor,
-      color: theme.primaryColor,
-    },
-    outline: {
-      border: `2px solid ${theme.primaryColor}`,
-      color: theme.primaryColor,
-      backgroundColor: 'transparent',
-    },
+  const variantStyles = {
+    primary: 'bg-purple-600 text-white hover:bg-purple-700',
+    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
+    outline: 'border-2 border-purple-600 text-purple-600 bg-transparent hover:bg-purple-50',
   };
 
   return (
     <button
-      style={styles[variant]}
-      className={`px-4 py-2 rounded-lg font-medium transition-colors hover:opacity-90 ${className}`}
+      className={`px-4 py-2 rounded-lg font-medium transition-colors ${variantStyles[variant]} ${className}`}
       {...props}
     >
       {children}

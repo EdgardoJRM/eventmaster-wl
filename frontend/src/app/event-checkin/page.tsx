@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { fetchAuthSession } from 'aws-amplify/auth';
 import apiClient from '@/lib/api';
 import { StyledButton } from '@/components/StyledButton';
 
@@ -28,16 +27,12 @@ function CheckInContent() {
 
   useEffect(() => {
     async function checkAuth() {
-      try {
-        const session = await fetchAuthSession();
-        if (!session.tokens) {
-          router.push('/login');
-          return;
-        }
-        loadRecentCheckIns();
-      } catch (error) {
-        router.push('/login');
+      const isAuthenticated = localStorage.getItem('isAuthenticated');
+      if (!isAuthenticated || isAuthenticated !== 'true') {
+        router.push('/');
+        return;
       }
+      loadRecentCheckIns();
     }
     
     checkAuth();
