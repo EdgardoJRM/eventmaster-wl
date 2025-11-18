@@ -39,7 +39,7 @@ api.interceptors.response.use(
 export const authApi = {
   requestMagicLink: async (email: string) => {
     try {
-      // Inicia el custom auth flow con Cognito
+      // Primero intentamos signIn
       const signInOutput = await signIn({
         username: email,
         options: {
@@ -54,6 +54,45 @@ export const authApi = {
       };
     } catch (error: any) {
       console.error('Error requesting magic link:', error);
+      
+      // Si el usuario no existe, lo creamos primero con signUp
+      if (error.name === 'UserNotFoundException') {
+        try {
+          const { signUp } = await import('aws-amplify/auth');
+          
+          // SignUp sin password (custom auth)
+          await signUp({
+            username: email,
+            password: Math.random().toString(36).slice(-16) + 'Aa1!', // Password temporal (no se usa)
+            options: {
+              userAttributes: {
+                email: email,
+              },
+              autoSignIn: {
+                enabled: true,
+              },
+            },
+          });
+          
+          // Reintentamos signIn después de crear el usuario
+          const signInOutput = await signIn({
+            username: email,
+            options: {
+              authFlowType: 'CUSTOM_WITHOUT_SRP',
+            },
+          });
+          
+          return {
+            success: true,
+            message: 'Magic link sent to your email',
+            nextStep: signInOutput.nextStep,
+          };
+        } catch (signUpError: any) {
+          console.error('Error creating user:', signUpError);
+          throw signUpError;
+        }
+      }
+      
       throw error;
     }
   },
