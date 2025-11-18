@@ -41,7 +41,8 @@ export default function DashboardPage() {
   const loadEvents = async () => {
     try {
       const response = await eventsApi.getAll();
-      setEvents(response.data || []);
+      // response.data.events es el array de eventos del Lambda
+      setEvents(response.data?.events || []);
     } catch {
       toast.error('Error al cargar eventos');
     } finally {
