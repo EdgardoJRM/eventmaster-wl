@@ -244,3 +244,4 @@ function RegistrationForm({ event, onSuccess }: { event: any; onSuccess: () => v
   );
 }
 
+

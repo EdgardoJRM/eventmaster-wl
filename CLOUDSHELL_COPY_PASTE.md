@@ -107,3 +107,4 @@ Después de ejecutar, deberías ver estas tablas:
 
 Una vez completado, tu base de datos estará lista para usar con EventMaster WL.
 
+

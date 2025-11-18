@@ -34,7 +34,7 @@ NEXT_PUBLIC_REGION=us-east-1
 ### 1. Verificar SES ⚠️ CRÍTICO
 
 ```bash
-aws ses verify-email-identity --email-address noreply@eventmasterwl.com
+aws ses verify-email-identity --email-address noreply@hernandezmediaevents.com
 ```
 
 Luego revisa tu email y haz clic en el link de verificación.
@@ -75,4 +75,5 @@ Solo faltan:
 3. Actualizar FRONTEND_URL (2 minutos)
 
 **Total: ~15-20 minutos para estar 100% funcional**
+
 

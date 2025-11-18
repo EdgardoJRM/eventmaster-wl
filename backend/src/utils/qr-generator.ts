@@ -34,3 +34,4 @@ export async function generateAndUploadQR(data: string): Promise<string> {
   return uploadQRToS3(buffer, filename);
 }
 
+

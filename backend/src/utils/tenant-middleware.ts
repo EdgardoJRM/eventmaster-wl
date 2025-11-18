@@ -76,3 +76,4 @@ export function addTenantFilter(
   return `${queryText} WHERE tenant_id = $${paramIndex}`;
 }
 
+

@@ -1,0 +1,108 @@
+name: Post-Deploy Check
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Ejecutar cada hora para verificar estado
+    - cron: '0 * * * *'
+
+jobs:
+  check-status:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Check Stack Status
+        id: stack-status
+        run: |
+          STACK_NAME="EventMasterStack-dev"
+          STATUS=$(aws cloudformation describe-stacks \
+            --stack-name "$STACK_NAME" \
+            --query 'Stacks[0].StackStatus' \
+            --output text 2>/dev/null || echo "NOT_FOUND")
+          
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          
+          if [ "$STATUS" == "CREATE_COMPLETE" ] || [ "$STATUS" == "UPDATE_COMPLETE" ]; then
+            echo "✅ Stack está desplegado correctamente"
+          else
+            echo "⚠️ Stack status: $STATUS"
+          fi
+
+      - name: Get Stack Outputs
+        if: steps.stack-status.outputs.status == 'CREATE_COMPLETE' || steps.stack-status.outputs.status == 'UPDATE_COMPLETE'
+        id: outputs
+        run: |
+          STACK_NAME="EventMasterStack-dev"
+          OUTPUTS=$(aws cloudformation describe-stacks \
+            --stack-name "$STACK_NAME" \
+            --query 'Stacks[0].Outputs' \
+            --output json)
+          
+          USER_POOL_ID=$(echo "$OUTPUTS" | jq -r '.[] | select(.OutputKey=="UserPoolId") | .OutputValue')
+          USER_POOL_CLIENT_ID=$(echo "$OUTPUTS" | jq -r '.[] | select(.OutputKey=="UserPoolClientId") | .OutputValue')
+          API_URL=$(echo "$OUTPUTS" | jq -r '.[] | select(.OutputKey=="ApiUrl") | .OutputValue')
+          
+          echo "user_pool_id=$USER_POOL_ID" >> $GITHUB_OUTPUT
+          echo "user_pool_client_id=$USER_POOL_CLIENT_ID" >> $GITHUB_OUTPUT
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+          
+          echo "📊 Stack Outputs:"
+          echo "   API URL: $API_URL"
+          echo "   User Pool ID: $USER_POOL_ID"
+          echo "   User Pool Client ID: $USER_POOL_CLIENT_ID"
+
+      - name: Check SES Status
+        id: ses-status
+        run: |
+          EMAIL="noreply@eventmasterwl.com"
+          STATUS=$(aws ses get-identity-verification-attributes \
+            --identities "$EMAIL" \
+            --query "VerificationAttributes.$EMAIL.VerificationStatus" \
+            --output text 2>/dev/null || echo "NOT_FOUND")
+          
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          
+          if [ "$STATUS" == "Success" ]; then
+            echo "✅ SES está verificado"
+          elif [ "$STATUS" == "Pending" ]; then
+            echo "⏳ SES está pendiente de verificación"
+          else
+            echo "⚠️ SES status: $STATUS"
+          fi
+
+      - name: Create Summary
+        run: |
+          echo "## 📊 Post-Deploy Status Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Stack Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ steps.stack-status.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.stack-status.outputs.status }}" == "CREATE_COMPLETE" ] || [ "${{ steps.stack-status.outputs.status }}" == "UPDATE_COMPLETE" ]; then
+            echo "### Stack Outputs" >> $GITHUB_STEP_SUMMARY
+            echo "- **API URL:** ${{ steps.outputs.outputs.api_url }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **User Pool ID:** ${{ steps.outputs.outputs.user_pool_id }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **User Pool Client ID:** ${{ steps.outputs.outputs.user_pool_client_id }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "### SES Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ steps.ses-status.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.ses-status.outputs.status }}" != "Success" ]; then
+            echo "⚠️ **Acción requerida:** Verifica SES revisando tu email" >> $GITHUB_STEP_SUMMARY
+          fi
+

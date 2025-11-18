@@ -1,7 +1,7 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 
 const sesClient = new SESClient({});
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@eventmasterwl.com';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@hernandezmediaevents.com';
 
 interface QREmailParams {
   to: string;
@@ -174,4 +174,5 @@ export async function sendReminderEmail(params: {
   const response = await sesClient.send(command);
   return response.MessageId || '';
 }
+
 

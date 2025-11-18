@@ -70,7 +70,7 @@ export class EventMasterStack extends cdk.Stack {
     });
 
     // 4. SES (Email) - Definir antes de usarlo
-    const verifiedEmail = `noreply@eventmasterwl.com`;
+    const verifiedEmail = `noreply@hernandezmediaevents.com`;
 
     // 5. Cognito User Pool con Magic Link
     // Resolver ruta del backend (desde el directorio raíz del proyecto)

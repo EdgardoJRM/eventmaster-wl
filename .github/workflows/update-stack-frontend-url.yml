@@ -1,0 +1,83 @@
+name: Update Stack with Amplify URL
+
+on:
+  workflow_dispatch:
+    inputs:
+      amplify_url:
+        description: 'Amplify App URL (e.g., https://main.xxxxx.amplifyapp.com)'
+        required: true
+        type: string
+  repository_dispatch:
+    types: [update-frontend-url]
+
+jobs:
+  update-stack:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: infrastructure/package-lock.json
+
+      - name: Install CDK dependencies
+        working-directory: ./infrastructure
+        run: npm ci
+
+      - name: Get Amplify URL
+        id: get-url
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "url=${{ github.event.inputs.amplify_url }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            echo "url=${{ github.event.client_payload.url }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update FRONTEND_URL in stack
+        run: |
+          FRONTEND_URL="${{ steps.get-url.outputs.url }}"
+          STACK_FILE="infrastructure/lib/eventmaster-stack.ts"
+          
+          # Actualizar la URL en el archivo
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s|'https://your-domain.com'|'$FRONTEND_URL'|g" "$STACK_FILE"
+            sed -i '' "s|'http://localhost:3000'|'$FRONTEND_URL'|g" "$STACK_FILE"
+          else
+            sed -i "s|'https://your-domain.com'|'$FRONTEND_URL'|g" "$STACK_FILE"
+            sed -i "s|'http://localhost:3000'|'$FRONTEND_URL'|g" "$STACK_FILE"
+          fi
+          
+          echo "✅ Updated FRONTEND_URL to: $FRONTEND_URL"
+
+      - name: Build CDK
+        working-directory: ./infrastructure
+        run: npm run build
+
+      - name: Deploy CDK Stack
+        working-directory: ./infrastructure
+        run: |
+          npm install -g aws-cdk
+          cdk deploy --context environment=dev --require-approval never
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add infrastructure/lib/eventmaster-stack.ts
+          git commit -m "chore: update FRONTEND_URL to ${{ steps.get-url.outputs.url }}" || exit 0
+          git push || exit 0
+

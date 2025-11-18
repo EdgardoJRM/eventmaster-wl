@@ -20,8 +20,9 @@
 
 ### Deploy
 - ✅ `amplify.yml` creado
-- ✅ GitHub Actions workflow creado
-- ✅ Scripts de utilidad creados
+- ✅ GitHub Actions workflows creados (3 workflows)
+- ✅ Scripts de utilidad creados (4 scripts automatizados)
+- ✅ Setup post-deploy automatizado
 
 ## ⏳ En Progreso
 
@@ -32,30 +33,66 @@
 
 ## 📋 Próximos Pasos (Después del Deploy)
 
+### 🚀 Opción Rápida: Script Automatizado
+
+```bash
+./scripts/post-deploy-setup.sh
+```
+
+Este script automatiza todos los pasos y muestra los valores necesarios.
+
+### 📝 Pasos Manuales (si prefieres)
+
 1. **Obtener Outputs del Stack**
    ```bash
    ./scripts/get-stack-outputs.sh
+   # O usar el script completo:
+   ./scripts/post-deploy-setup.sh
    ```
 
 2. **Verificar SES**
+   
+   **Opción A: Verificar dominio completo (Recomendado si tienes Route53)**
    ```bash
-   aws ses verify-email-identity --email-address noreply@eventmasterwl.com
+   ./scripts/verify-ses-domain.sh
+   ```
+   Esto verifica el dominio `hernandezmediaevents.com` y permite usar cualquier email del dominio.
+   
+   **Opción B: Verificar email individual**
+   ```bash
+   ./scripts/verify-ses.sh
+   # Revisa tu email y haz clic en el link de verificación
    ```
 
 3. **Configurar Amplify**
-   - Sigue `AMPLIFY_SETUP_GUIDE.md`
+   - Sigue `AMPLIFY_SETUP_GUIDE.md` o `QUICK_SETUP_AMPLIFY.md`
    - Conecta repo de GitHub
-   - Configura variables de entorno
+   - Configura variables de entorno (valores del paso 1)
 
 4. **Actualizar FRONTEND_URL**
-   - Después de obtener URL de Amplify
-   - Actualizar en `infrastructure/lib/eventmaster-stack.ts`
-   - Redeploy CDK
+   
+   **Opción A: Usando GitHub Actions (Recomendado)**
+   - Ve a: `Actions` → `Update Stack with Amplify URL`
+   - Ingresa la URL de Amplify
+   - Click en `Run workflow`
+   
+   **Opción B: Localmente**
+   ```bash
+   ./scripts/update-frontend-url.sh https://main.xxxxx.amplifyapp.com
+   cd infrastructure && cdk deploy --context environment=dev
+   ```
 
 5. **Probar Magic Link**
    - Ir a URL de Amplify
    - Probar login con email
    - Verificar magic link
+
+### 🤖 Automatización con GitHub Actions
+
+Ver `AUTOMATED_SETUP.md` para detalles completos sobre:
+- Workflow de verificación post-deploy
+- Workflow de actualización de FRONTEND_URL
+- Workflow de deploy automático a Amplify
 
 ## 📊 Recursos Creados
 
@@ -105,5 +142,14 @@ aws cloudformation describe-stack-events \
 
 - El deploy puede tardar más si hay muchos recursos que actualizar
 - Las Lambda functions se están creando correctamente
-- Una vez completado, necesitarás configurar Amplify manualmente desde la consola
+- Una vez completado, usa `./scripts/post-deploy-setup.sh` para automatizar el setup
+- Los workflows de GitHub Actions automatizan el deploy y actualización del stack
+
+## 📚 Documentación
+
+- `AUTOMATED_SETUP.md` - Guía completa de automatización
+- `QUICK_SETUP_AMPLIFY.md` - Setup rápido de Amplify (6 pasos)
+- `DEPLOY_COMPLETE_MAGIC_LINK.md` - Estado del deploy
+- `README_MAGIC_LINK.md` - Documentación completa
+
 

@@ -2,7 +2,7 @@ import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { randomBytes } from 'crypto';
 
 const sesClient = new SESClient({ region: process.env.AWS_REGION || 'us-east-1' });
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@eventmasterwl.com';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@hernandezmediaevents.com';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 export const handler = async (event: any) => {
@@ -79,4 +79,5 @@ export const handler = async (event: any) => {
 
   return event;
 };
+
 

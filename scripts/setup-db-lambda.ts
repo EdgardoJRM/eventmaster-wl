@@ -24,3 +24,4 @@ async function setupDatabase() {
 
 setupDatabase().catch(console.error);
 
+

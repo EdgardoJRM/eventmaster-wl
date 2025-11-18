@@ -67,3 +67,4 @@ Si ves errores de "already exists", es normal - significa que algunas tablas ya 
 
 Una vez completado, tu base de datos estará lista para usar.
 
+

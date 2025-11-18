@@ -62,3 +62,4 @@ Deberías ver:
 - Para desarrollo local, puedes usar un VPN o AWS Systems Manager Session Manager
 - Alternativamente, puedes hacer el RDS público temporalmente (no recomendado para producción)
 
+

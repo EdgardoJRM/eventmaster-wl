@@ -92,3 +92,4 @@ arn:aws:cloudformation:us-east-1:104768552978:stack/EventMasterStack-dev/2d5361a
 - Los buckets S3 tienen versionado habilitado
 - Todas las Lambda functions tienen acceso a VPC para RDS
 
+

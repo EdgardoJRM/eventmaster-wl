@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - master
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -39,10 +40,46 @@ jobs:
           NEXT_PUBLIC_REGION: ${{ secrets.NEXT_PUBLIC_REGION }}
 
       - name: Deploy to Amplify
+        if: github.event_name != 'pull_request'
         uses: aws-amplify/amplify-cli-action@v2
         with:
           amplify_command: publish
           amplify_app_id: ${{ secrets.AMPLIFY_APP_ID }}
           amplify_env_name: ${{ secrets.AMPLIFY_ENV_NAME || 'main' }}
           amplify_access_token: ${{ secrets.AMPLIFY_ACCESS_TOKEN }}
+
+      - name: Get Amplify URL
+        if: github.event_name != 'pull_request' && success()
+        id: amplify-url
+        run: |
+          # Intentar obtener la URL de Amplify
+          if [ -n "${{ secrets.AMPLIFY_APP_ID }}" ]; then
+            # La URL generalmente es: https://main.{app-id}.amplifyapp.com
+            # Pero necesitamos obtenerla del API de Amplify
+            echo "url=https://main.${{ secrets.AMPLIFY_APP_ID }}.amplifyapp.com" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create deployment summary
+        if: always()
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Status" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ **Deployment successful**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Deployment failed**" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ steps.amplify-url.outputs.url }}" ]; then
+            echo "### Amplify URL" >> $GITHUB_STEP_SUMMARY
+            echo "- **URL:** ${{ steps.amplify-url.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "💡 **Next step:** Update FRONTEND_URL in CDK stack:" >> $GITHUB_STEP_SUMMARY
+            echo "   \`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "   ./scripts/update-frontend-url.sh ${{ steps.amplify-url.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+            echo "   cd infrastructure && cdk deploy --context environment=dev" >> $GITHUB_STEP_SUMMARY
+            echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
 

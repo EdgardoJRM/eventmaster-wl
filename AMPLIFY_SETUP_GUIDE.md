@@ -153,3 +153,4 @@ Luego verifica el email desde tu bandeja de entrada.
 - Amplify detecta automáticamente cambios en GitHub y hace redeploy
 - Puedes configurar custom domains en Amplify Console
 
+

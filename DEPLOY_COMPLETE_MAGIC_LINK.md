@@ -44,11 +44,15 @@ aws cloudformation describe-stacks \
 
 ```bash
 # Verificar email
-aws ses verify-email-identity --email-address noreply@eventmasterwl.com
+# Verificar dominio completo (recomendado si tienes Route53)
+./scripts/verify-ses-domain.sh
+
+# O verificar email individual
+aws ses verify-email-identity --email-address noreply@hernandezmediaevents.com
 
 # Verificar estado
 aws ses get-identity-verification-attributes \
-  --identities noreply@eventmasterwl.com
+  --identities noreply@hernandezmediaevents.com
 ```
 
 **IMPORTANTE:** Revisa tu email y haz clic en el link de verificación de SES.
@@ -150,4 +154,5 @@ Una vez que:
 3. ✅ FRONTEND_URL esté actualizado
 
 El magic link authentication estará 100% funcional.
+
 

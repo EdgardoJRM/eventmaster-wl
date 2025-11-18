@@ -67,3 +67,4 @@ PGPASSWORD="$DB_PASSWORD" psql -h "$DB_ENDPOINT" -U "$DB_USER" -d "$DB_NAME" -f 
 
 echo "✅ Schema SQL ejecutado exitosamente!"
 
+

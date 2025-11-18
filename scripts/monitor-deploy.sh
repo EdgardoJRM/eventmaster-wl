@@ -34,3 +34,4 @@ echo ""
 echo "📊 Resumen del deploy:"
 tail -20 "$LOG_FILE" 2>/dev/null | grep -E "(CREATE_|UPDATE_|Stack|Outputs)" || echo "Revisa el log completo en $LOG_FILE"
 
+

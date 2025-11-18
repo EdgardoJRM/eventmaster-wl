@@ -98,3 +98,4 @@ npm run dev
 - Si falla la creación del tenant, el signup continúa (el usuario puede crear tenant después)
 - El slug del tenant se genera desde el email (ej: `user@example.com` → `user`)
 
+

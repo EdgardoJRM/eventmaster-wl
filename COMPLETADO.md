@@ -88,3 +88,4 @@ aws ses verify-email-identity --email-address noreply@eventmasterwl.com
 - Considera hacerlo privado después de ejecutar el schema
 - Todas las credenciales están en AWS Secrets Manager
 
+

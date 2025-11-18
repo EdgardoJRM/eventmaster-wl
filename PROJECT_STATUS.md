@@ -124,3 +124,4 @@
 
 El proyecto está listo para usar. Solo falta ejecutar el schema SQL en RDS para comenzar a crear eventos.
 
+

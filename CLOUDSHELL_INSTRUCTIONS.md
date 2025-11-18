@@ -128,3 +128,4 @@ Después de ejecutar, deberías ver estas tablas:
 - No necesitas hacer el RDS público para CloudShell
 - El script tarda aproximadamente 2-3 minutos en completarse
 
+

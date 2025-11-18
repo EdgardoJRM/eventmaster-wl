@@ -1,0 +1,15 @@
+# Valores para configurar en GitHub Secrets
+# Ve a: https://github.com/TU_USUARIO/TU_REPO/settings/secrets/actions
+#
+# Ejecuta ./scripts/post-deploy-setup.sh para actualizar estos valores automáticamente
+
+NEXT_PUBLIC_API_URL=https://03u4jvb0a0.execute-api.us-east-1.amazonaws.com/dev/
+NEXT_PUBLIC_USER_POOL_ID=us-east-1_SehO8B4FC
+NEXT_PUBLIC_USER_POOL_CLIENT_ID=55q7t23v9uojdvpnq9cmvqkisv
+NEXT_PUBLIC_REGION=us-east-1
+
+# Después de crear la app en Amplify, agrega también:
+# AMPLIFY_APP_ID=tu-app-id
+# AMPLIFY_ACCESS_TOKEN=tu-access-token
+# AMPLIFY_ENV_NAME=main (opcional)
+

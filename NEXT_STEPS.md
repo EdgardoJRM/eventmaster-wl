@@ -124,3 +124,4 @@ Tendrás:
 - ✅ Frontend desplegado en Amplify
 - ✅ CI/CD configurado
 
+

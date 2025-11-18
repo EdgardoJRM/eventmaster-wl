@@ -121,3 +121,4 @@
 - **Páginas Frontend:** 10+ páginas
 - **Líneas de código:** ~5000+ líneas
 
+

@@ -49,3 +49,4 @@ echo "💡 Después del deploy, actualiza FRONTEND_URL en:"
 echo "   infrastructure/lib/eventmaster-stack.ts (línea ~99)"
 echo ""
 
+
