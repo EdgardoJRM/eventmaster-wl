@@ -1,0 +1,34 @@
+{
+  "PoolName": "eventmaster-users",
+  "Policies": {
+    "PasswordPolicy": {
+      "MinimumLength": 8,
+      "RequireUppercase": true,
+      "RequireLowercase": true,
+      "RequireNumbers": true,
+      "RequireSymbols": true
+    }
+  },
+  "Schema": [
+    {
+      "Name": "email",
+      "AttributeDataType": "String",
+      "Required": true,
+      "Mutable": true
+    },
+    {
+      "Name": "name",
+      "AttributeDataType": "String",
+      "Required": true,
+      "Mutable": true
+    },
+    {
+      "Name": "custom:tenant_id",
+      "AttributeDataType": "String",
+      "Required": false,
+      "Mutable": true
+    }
+  ],
+  "AutoVerifiedAttributes": ["email"]
+}
+
