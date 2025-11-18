@@ -30,18 +30,36 @@ function VerifyMagicLinkContent() {
     try {
       setVerifying(true);
 
-      // Iniciar custom auth flow (esto iniciará el challenge)
-      await signIn({
+      // Iniciar custom auth flow
+      const signInOutput = await signIn({
         username: email,
         options: {
           authFlowType: 'CUSTOM_WITHOUT_SRP',
         },
       });
 
-      // Confirmar el challenge con el código del magic link
-      await confirmSignIn({
-        challengeResponse: code,
-      });
+      console.log('SignIn output:', signInOutput);
+
+      // Si el signIn requiere un challenge, responder con el código del magic link
+      if (signInOutput.nextStep?.signInStep === 'CONFIRM_SIGN_IN_WITH_CUSTOM_CHALLENGE') {
+        await confirmSignIn({
+          challengeResponse: code,
+        });
+      }
+
+      // Guardar tokens en localStorage
+      const { fetchAuthSession } = await import('aws-amplify/auth');
+      const session = await fetchAuthSession();
+      
+      if (session.tokens) {
+        localStorage.setItem('authToken', session.tokens.accessToken?.toString() || '');
+        localStorage.setItem('idToken', session.tokens.idToken?.toString() || '');
+        localStorage.setItem('isAuthenticated', 'true');
+        if (email) {
+          localStorage.setItem('userEmail', email);
+          localStorage.setItem('username', email);
+        }
+      }
 
       // Redirigir al dashboard
       router.push('/dashboard');
