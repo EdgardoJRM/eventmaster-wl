@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams} from 'next/navigation';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import apiClient from '@/lib/api';
 import { StyledButton } from '@/components/StyledButton';
@@ -16,6 +16,8 @@ interface Participant {
   qr_code_url?: string;
   created_at: string;
 }
+
+export const dynamicParams = true;
 
 export default function ParticipantsPage() {
   const params = useParams();
