@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@aws-amplify/auth": "^6.0.0",
-    "@tailwindcss/postcss": "^4.1.17",
     "@types/qrcode.react": "^3.0.0",
     "aws-amplify": "^6.0.0",
     "axios": "^1.6.5",
@@ -28,7 +27,7 @@
     "@types/react-dom": "^18.2.18",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",
-    "tailwindcss": "^4.0.0",
+    "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3"
   }
 }
