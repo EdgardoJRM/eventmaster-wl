@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchAuthSession } from 'aws-amplify/auth';
-import apiClient from '@/lib/api';
+import { eventsApi } from '@/lib/api';
 import { StyledButton } from '@/components/StyledButton';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function NewEventPage() {
   const [step, setStep] = useState(1);
@@ -22,27 +22,32 @@ export default function NewEventPage() {
     timezone: 'America/Mexico_City',
   });
 
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('isAuthenticated');
+    if (!isAuthenticated || isAuthenticated !== 'true') {
+      router.push('/');
+    }
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const session = await fetchAuthSession();
-      if (!session.tokens) {
-        router.push('/login');
-        return;
-      }
-
-      const response = await apiClient.post('/events', {
+      const response = await eventsApi.create({
         ...formData,
         capacity: formData.capacity ? parseInt(formData.capacity) : null,
       });
 
-      if (response.data.success) {
-        router.push(`/events/${response.data.data.id}`);
+      if (response.success) {
+        toast.success('Evento creado correctamente');
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1000);
       }
     } catch (error: any) {
-      alert(error.response?.data?.error?.message || 'Error al crear evento');
+      console.error('Error creating event:', error);
+      toast.error(error.response?.data?.error?.message || 'Error al crear evento');
     } finally {
       setLoading(false);
     }
@@ -50,12 +55,14 @@ export default function NewEventPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Toaster position="top-center" />
+      
       <nav className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <button onClick={() => router.push('/events')} className="text-primary">
-                ← Eventos
+              <button onClick={() => router.push('/dashboard')} className="text-purple-600 hover:text-purple-700 font-medium">
+                ← Dashboard
               </button>
             </div>
           </div>
@@ -64,7 +71,7 @@ export default function NewEventPage() {
 
       <main className="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <h2 className="text-2xl font-bold mb-6">Crear Nuevo Evento</h2>
+          <h2 className="text-2xl font-bold mb-6 text-gray-900">Crear Nuevo Evento</h2>
 
           <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
             <div>
@@ -164,16 +171,20 @@ export default function NewEventPage() {
             </div>
 
             <div className="flex justify-end space-x-4">
-              <StyledButton
+              <button
                 type="button"
-                variant="outline"
-                onClick={() => router.push('/events')}
+                onClick={() => router.push('/dashboard')}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium"
               >
                 Cancelar
-              </StyledButton>
-              <StyledButton type="submit" disabled={loading}>
-                {loading ? 'Guardando...' : 'Guardar Borrador'}
-              </StyledButton>
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {loading ? 'Creando...' : 'Crear Evento'}
+              </button>
             </div>
           </form>
         </div>
