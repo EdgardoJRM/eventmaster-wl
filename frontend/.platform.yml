@@ -1,0 +1,9 @@
+# Amplify Platform Configuration for Next.js SSR
+version: 1.0
+
+applications:
+  - appRoot: frontend
+    platform: Next.js - SSR
+    buildCommand: npm run build
+    startCommand: npm run start
+

@@ -1,0 +1,6 @@
+# AWS Amplify Platform Configuration
+version: 1.0
+
+applications:
+  - appRoot: frontend
+    framework: Next.js - SSR
