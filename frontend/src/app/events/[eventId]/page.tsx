@@ -1,0 +1,441 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { eventsApi, participantsApi } from '@/lib/api';
+import toast, { Toaster } from 'react-hot-toast';
+import Link from 'next/link';
+
+interface Event {
+  event_id: string;
+  tenant_id: string;
+  title: string;
+  description: string;
+  slug?: string;
+  location: {
+    name: string;
+    address: string;
+    is_online: boolean;
+  };
+  dates: {
+    start: number;
+    end: number;
+    timezone: string;
+    is_all_day: boolean;
+  };
+  capacity: number;
+  registered_count: number;
+  checked_in_count: number;
+  status: string;
+  created_at: number;
+}
+
+interface Participant {
+  participant_id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  registered_at: number;
+  checked_in: boolean;
+  checked_in_at?: number;
+}
+
+export default function EventDetailPage() {
+  const router = useRouter();
+  const params = useParams();
+  const eventId = params?.eventId as string;
+
+  const [event, setEvent] = useState<Event | null>(null);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'details' | 'participants'>('details');
+
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('isAuthenticated');
+    if (!isAuthenticated || isAuthenticated !== 'true') {
+      router.push('/');
+      return;
+    }
+
+    if (eventId) {
+      loadEventData();
+    }
+  }, [eventId, router]);
+
+  const loadEventData = async () => {
+    try {
+      setLoading(true);
+      const eventResponse = await eventsApi.getById(eventId);
+      
+      if (eventResponse.success && eventResponse.data) {
+        setEvent(eventResponse.data);
+        
+        // Load participants if available
+        try {
+          const participantsResponse = await participantsApi.getByEvent(eventId);
+          if (participantsResponse.success && participantsResponse.data) {
+            setParticipants(participantsResponse.data.participants || []);
+          }
+        } catch (err) {
+          console.log('No participants yet or error loading:', err);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error loading event:', error);
+      toast.error('Error al cargar el evento');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCheckIn = async (participantId: string) => {
+    try {
+      await participantsApi.checkIn(eventId, participantId);
+      toast.success('Check-in realizado correctamente');
+      loadEventData();
+    } catch (error) {
+      console.error('Error checking in:', error);
+      toast.error('Error al realizar check-in');
+    }
+  };
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleString('es-MX', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatTime = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleTimeString('es-MX', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando evento...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-6xl mb-4">😕</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Evento no encontrado</h2>
+          <p className="text-gray-600 mb-6">El evento que buscas no existe o no tienes acceso.</p>
+          <Link
+            href="/dashboard"
+            className="inline-block bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition"
+          >
+            Volver al Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const availableSpots = event.capacity - event.registered_count;
+  const checkInPercentage = event.registered_count > 0 
+    ? Math.round((event.checked_in_count / event.registered_count) * 100)
+    : 0;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Toaster position="top-center" />
+      
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="text-purple-600 hover:text-purple-700 font-medium"
+            >
+              ← Volver al Dashboard
+            </button>
+            <div className="flex items-center space-x-3">
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                event.status === 'published' 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {event.status === 'published' ? 'Publicado' : 'Borrador'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Event Header */}
+        <div className="bg-white rounded-lg shadow-sm p-8 mb-6">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">{event.title}</h1>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {/* Date & Time */}
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Fecha y Hora</p>
+                <p className="text-sm text-gray-600">{formatDate(event.dates.start)}</p>
+                <p className="text-sm text-gray-600">
+                  {formatTime(event.dates.start)} - {formatTime(event.dates.end)}
+                </p>
+              </div>
+            </div>
+
+            {/* Location */}
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Ubicación</p>
+                <p className="text-sm text-gray-600">{event.location.name}</p>
+                {event.location.address && (
+                  <p className="text-sm text-gray-500">{event.location.address}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Capacity */}
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Capacidad</p>
+                <p className="text-sm text-gray-600">
+                  {event.registered_count} / {event.capacity} registrados
+                </p>
+                <p className="text-sm text-gray-500">
+                  {availableSpots > 0 ? `${availableSpots} lugares disponibles` : 'Evento lleno'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div className="bg-purple-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-purple-900">Registrados</p>
+                  <p className="text-3xl font-bold text-purple-600">{event.registered_count}</p>
+                </div>
+                <svg className="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+              </div>
+            </div>
+
+            <div className="bg-green-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-900">Check-ins</p>
+                  <p className="text-3xl font-bold text-green-600">{event.checked_in_count}</p>
+                  <p className="text-xs text-green-700">{checkInPercentage}% asistencia</p>
+                </div>
+                <svg className="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-900">Disponibles</p>
+                  <p className="text-3xl font-bold text-blue-600">{availableSpots}</p>
+                  <p className="text-xs text-blue-700">de {event.capacity} totales</p>
+                </div>
+                <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="bg-white rounded-lg shadow-sm mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="flex -mb-px">
+              <button
+                onClick={() => setActiveTab('details')}
+                className={`py-4 px-6 text-sm font-medium ${
+                  activeTab === 'details'
+                    ? 'border-b-2 border-purple-600 text-purple-600'
+                    : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Detalles del Evento
+              </button>
+              <button
+                onClick={() => setActiveTab('participants')}
+                className={`py-4 px-6 text-sm font-medium ${
+                  activeTab === 'participants'
+                    ? 'border-b-2 border-purple-600 text-purple-600'
+                    : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Participantes ({participants.length})
+              </button>
+            </nav>
+          </div>
+
+          <div className="p-6">
+            {activeTab === 'details' ? (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Descripción</h3>
+                  <p className="text-gray-600 whitespace-pre-wrap">
+                    {event.description || 'Sin descripción'}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Información Adicional</h3>
+                  <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">ID del Evento</dt>
+                      <dd className="text-sm text-gray-900 font-mono">{event.event_id}</dd>
+                    </div>
+                    {event.slug && (
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Slug</dt>
+                        <dd className="text-sm text-gray-900">{event.slug}</dd>
+                      </div>
+                    )}
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Zona Horaria</dt>
+                      <dd className="text-sm text-gray-900">{event.dates.timezone}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Creado el</dt>
+                      <dd className="text-sm text-gray-900">
+                        {new Date(event.created_at * 1000).toLocaleDateString('es-MX')}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <div className="flex space-x-4 pt-4 border-t">
+                  <Link
+                    href={`/events/${eventId}/edit`}
+                    className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-md font-medium hover:bg-purple-700 transition text-center"
+                  >
+                    Editar Evento
+                  </Link>
+                  <button
+                    className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-md font-medium hover:bg-gray-200 transition"
+                  >
+                    Compartir
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                {participants.length === 0 ? (
+                  <div className="text-center py-12">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No hay participantes</h3>
+                    <p className="mt-1 text-sm text-gray-500">Aún no hay participantes registrados en este evento.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Participante
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Email
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Teléfono
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Estado
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Acciones
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {participants.map((participant) => (
+                          <tr key={participant.participant_id}>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">{participant.name}</div>
+                              <div className="text-sm text-gray-500">
+                                Registrado: {new Date(participant.registered_at * 1000).toLocaleDateString()}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {participant.email}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {participant.phone || '-'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {participant.checked_in ? (
+                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                  ✓ Check-in realizado
+                                </span>
+                              ) : (
+                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                  Pendiente
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              {!participant.checked_in && (
+                                <button
+                                  onClick={() => handleCheckIn(participant.participant_id)}
+                                  className="text-purple-600 hover:text-purple-900"
+                                >
+                                  Hacer Check-in
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
