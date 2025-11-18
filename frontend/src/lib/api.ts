@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { config } from '../config';
+import { signIn, confirmSignIn } from 'aws-amplify/auth';
 
 const api = axios.create({
   baseURL: config.apiUrl,
@@ -34,16 +35,44 @@ api.interceptors.response.use(
   }
 );
 
-// Auth API
+// Auth API - uses Cognito directly, not REST endpoints
 export const authApi = {
   requestMagicLink: async (email: string) => {
-    const response = await api.post('/auth/magic-link/request', { email });
-    return response.data;
+    try {
+      // Inicia el custom auth flow con Cognito
+      const signInOutput = await signIn({
+        username: email,
+        options: {
+          authFlowType: 'CUSTOM_WITHOUT_SRP',
+        },
+      });
+      
+      return {
+        success: true,
+        message: 'Magic link sent to your email',
+        nextStep: signInOutput.nextStep,
+      };
+    } catch (error: any) {
+      console.error('Error requesting magic link:', error);
+      throw error;
+    }
   },
   
-  verifyMagicLink: async (token: string) => {
-    const response = await api.post('/auth/magic-link/verify', { token });
-    return response.data;
+  verifyMagicLink: async (code: string) => {
+    try {
+      // Verifica el código del magic link
+      const confirmOutput = await confirmSignIn({
+        challengeResponse: code,
+      });
+      
+      return {
+        success: true,
+        user: confirmOutput,
+      };
+    } catch (error: any) {
+      console.error('Error verifying magic link:', error);
+      throw error;
+    }
   },
 };
 
