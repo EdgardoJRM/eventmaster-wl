@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postbuild": "cp -r .next/standalone .next/static .amplify-hosting/ 2>/dev/null || mkdir -p .amplify-hosting && cp -r .next .amplify-hosting/"
+    "lint": "next lint"
   },
   "dependencies": {
     "@aws-amplify/auth": "^6.0.0",
