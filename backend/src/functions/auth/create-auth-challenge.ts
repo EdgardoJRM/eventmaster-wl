@@ -8,9 +8,25 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 export const handler = async (event: any) => {
   console.log('CreateAuthChallenge event:', JSON.stringify(event, null, 2));
 
-  // Generar código secreto único
-  const secretCode = randomBytes(32).toString('hex');
   const email = event.request.userAttributes.email;
+  
+  // Solo enviar email en la PRIMERA invocación (session vacío)
+  // Esto evita enviar múltiples emails durante la navegación
+  const isFirstAttempt = !event.request.session || event.request.session.length === 0;
+  
+  if (!isFirstAttempt) {
+    console.log('Skipping email send - not first attempt. Session:', event.request.session);
+    // Generar un código temporal (no se usará porque ya hay uno enviado)
+    event.response.privateChallengeParameters = {
+      secretCode: 'RETRY_NOT_ALLOWED',
+    };
+    event.response.publicChallengeParameters = { email };
+    event.response.challengeMetadata = 'MAGIC_LINK';
+    return event;
+  }
+
+  // Generar código secreto único SOLO en primera invocación
+  const secretCode = randomBytes(32).toString('hex');
 
   // Guardar el código en privateChallengeParameters (no se envía al cliente)
   event.response.privateChallengeParameters = {
@@ -20,7 +36,7 @@ export const handler = async (event: any) => {
   // Crear el link de magic link
   const magicLink = `${FRONTEND_URL}/auth/verify?email=${encodeURIComponent(email)}&code=${secretCode}`;
 
-  // Enviar email con magic link
+  // Enviar email con magic link SOLO en primera invocación
   try {
     const emailBody = `
       <html>
