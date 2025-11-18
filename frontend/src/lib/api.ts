@@ -61,12 +61,14 @@ export const authApi = {
           const { signUp } = await import('aws-amplify/auth');
           
           // SignUp sin password (custom auth)
+          const name = email.split('@')[0]; // Usar parte antes del @ como name
           await signUp({
             username: email,
             password: Math.random().toString(36).slice(-16) + 'Aa1!', // Password temporal (no se usa)
             options: {
               userAttributes: {
                 email: email,
+                name: name, // Atributo requerido por User Pool
               },
               autoSignIn: {
                 enabled: true,
