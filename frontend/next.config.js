@@ -1,11 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  output: 'export',
+  trailingSlash: true,
   images: {
-    domains: ['localhost', '*.s3.amazonaws.com', '*.s3.*.amazonaws.com'],
+    unoptimized: true,
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
 
 

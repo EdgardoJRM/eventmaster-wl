@@ -1,147 +1,254 @@
-# EventMaster WL - White Label Event Management Platform
+# EventMaster - White Label Event Management Platform
 
-Plataforma completa de gestión de eventos multi-tenant con branding personalizado.
+Plataforma SaaS para gestión de eventos con sistema de check-in QR, registro de participantes y analíticas en tiempo real.
+
+## 🚀 Características
+
+- **Autenticación Magic Link**: Login sin contraseñas via email
+- **Gestión de Eventos**: Crear, editar y eliminar eventos
+- **Check-in QR**: Sistema de check-in con códigos QR
+- **Participantes**: Registro y gestión de participantes
+- **Dashboard**: Vista general con estadísticas y eventos recientes
+- **Responsive**: Diseño mobile-first completamente responsive
 
 ## 🏗️ Arquitectura
 
-- **Backend:** AWS Lambda (Node.js 18 + TypeScript)
-- **Frontend:** Next.js 15 + React 19 + TypeScript + Tailwind CSS
-- **Database:** PostgreSQL (RDS)
-- **Infrastructure:** AWS CDK
-- **Auth:** AWS Cognito
-- **Storage:** AWS S3 (imágenes, QR codes)
-- **Email:** AWS SES
-- **SMS:** AWS SNS / Twilio
+### Frontend
+- **Framework**: Next.js 15 con App Router
+- **Styling**: Tailwind CSS 4
+- **Auth**: Magic Link (Cognito + SES)
+- **State**: React Hooks + localStorage
+- **API Client**: Axios con interceptores
 
-## 📁 Estructura del Proyecto
+### Backend
+- **Runtime**: AWS Lambda (Node.js)
+- **API**: API Gateway REST
+- **Database**: PostgreSQL (RDS)
+- **Auth**: AWS Cognito
+- **Email**: AWS SES
+- **Storage**: S3 para archivos
+
+## 📦 Instalación
+
+```bash
+# Clonar repositorio
+git clone <repository-url>
+cd events
+
+# Instalar dependencias
+npm install
+
+# Copiar variables de entorno
+cp .env.example .env.local
+
+# Configurar variables de entorno
+# Editar .env.local con tus valores
+
+# Iniciar desarrollo
+npm run dev
+```
+
+## 🔧 Variables de Entorno
+
+Crea un archivo `.env.local` en el directorio `frontend/`:
+
+```bash
+NEXT_PUBLIC_API_URL=https://your-api.execute-api.us-east-1.amazonaws.com/dev
+NEXT_PUBLIC_USER_POOL_ID=us-east-1_xxxxxxxxx
+NEXT_PUBLIC_USER_POOL_CLIENT_ID=xxxxxxxxxxxxxxxxxx
+NEXT_PUBLIC_AWS_REGION=us-east-1
+```
+
+## 🎯 Estructura del Proyecto
 
 ```
 events/
-├── backend/              # Lambda functions
+├── frontend/                 # Aplicación Next.js
 │   ├── src/
-│   │   ├── functions/    # Lambda handlers
-│   │   └── utils/        # Utilidades compartidas
+│   │   ├── app/             # App Router pages
+│   │   │   ├── dashboard/   # Dashboard principal
+│   │   │   ├── events/      # Gestión de eventos
+│   │   │   ├── verify/      # Verificación magic link
+│   │   │   ├── layout.tsx   # Layout principal
+│   │   │   └── page.tsx     # Landing/Login page
+│   │   ├── components/      # Componentes reutilizables
+│   │   ├── lib/
+│   │   │   └── api.ts       # Cliente API con interceptores
+│   │   ├── config.ts        # Configuración centralizada
+│   │   └── middleware.ts    # Next.js middleware
+│   ├── public/              # Assets estáticos
+│   ├── next.config.js       # Configuración Next.js
 │   └── package.json
-├── frontend/             # Next.js app
+├── backend/                  # Lambda functions
 │   ├── src/
-│   │   ├── app/          # Next.js App Router
-│   │   ├── components/   # Componentes React
-│   │   ├── contexts/     # React Contexts
-│   │   └── hooks/        # Custom hooks
+│   │   ├── functions/       # Lambda handlers
+│   │   │   ├── auth/        # Autenticación
+│   │   │   ├── events/      # CRUD eventos
+│   │   │   ├── participants/# Gestión participantes
+│   │   │   └── checkin/     # Sistema check-in
+│   │   └── utils/           # Utilidades compartidas
 │   └── package.json
-├── infrastructure/       # AWS CDK
-│   ├── lib/
-│   └── package.json
-├── database/             # SQL migrations
-└── EVENTMASTER-WL-COMPLETE-SPEC.md
+├── infrastructure/           # IaC (CDK)
+├── amplify.yml              # Configuración AWS Amplify
+└── package.json             # Scripts raíz
 ```
 
-## 🚀 Setup
+## 🔑 Flujo de Autenticación
 
-### Prerrequisitos
+1. Usuario ingresa email en landing page
+2. Backend envía magic link via SES
+3. Usuario hace click en el link
+4. `/verify?token=xxx` valida el token
+5. Sistema guarda sesión en localStorage
+6. Redirect automático a `/dashboard`
 
-- Node.js 18+
-- AWS CLI configurado
-- PostgreSQL (local o RDS)
-- AWS CDK CLI: `npm install -g aws-cdk`
+## 🎨 Páginas Principales
 
-### Instalación
+### Landing (`/`)
+- Formulario de login con magic link
+- Cards de features
+- Auto-redirect si ya está autenticado
+
+### Verify (`/verify`)
+- Verificación de token de magic link
+- Estados: verifying, success, error
+- Feedback visual con animaciones
+
+### Dashboard (`/dashboard`)
+- Lista de eventos en grid
+- Header con user info y logout
+- Crear nuevo evento
+- Ver detalles / Eliminar eventos
+- Estado vacío con CTA
+
+### Events
+- `/events/new` - Crear evento
+- `/events/{id}` - Detalles del evento
+- `/events/{id}/edit` - Editar evento
+- `/events/{id}/checkin` - Check-in QR
+- `/events/{id}/participants` - Lista de participantes
+
+## 🛠️ Scripts Disponibles
 
 ```bash
-# Backend
-cd backend
-npm install
+# Desarrollo
+npm run dev              # Inicia servidor de desarrollo
 
-# Frontend
-cd frontend
-npm install
+# Producción
+npm run build            # Build para producción
+npm run start            # Servidor de producción
 
-# Infrastructure
-cd infrastructure
-npm install
+# Otros
+npm run postinstall      # Instala deps del frontend
 ```
 
-### Desarrollo
+## 📡 API Endpoints
 
-```bash
-# Backend (desarrollo local con SAM)
-cd backend
-npm run dev
-
-# Frontend
-cd frontend
-npm run dev
-
-# Deploy Infrastructure
-cd infrastructure
-cdk deploy
+### Autenticación
+```
+POST /auth/magic-link/request
+POST /auth/magic-link/verify
 ```
 
-## 📝 Base de Datos
-
-**Ejecutar el esquema SQL en RDS:**
-
-```bash
-# Opción 1: Script automático
-./scripts/setup-database.sh
-
-# Opción 2: Manual
-# 1. Obtener credenciales
-aws secretsmanager get-secret-value --secret-id <SECRET_ARN>
-
-# 2. Conectar y ejecutar
-psql -h <RDS_ENDPOINT> -U <USERNAME> -d eventmaster -f database/schema.sql
+### Eventos
+```
+GET    /events                  # Lista de eventos
+POST   /events                  # Crear evento
+GET    /events/{id}            # Detalles del evento
+PUT    /events/{id}            # Actualizar evento
+DELETE /events/{id}            # Eliminar evento
 ```
 
-## 🔐 Variables de Entorno
-
-### Frontend (.env.local)
-```env
-NEXT_PUBLIC_API_URL=https://03u4jvb0a0.execute-api.us-east-1.amazonaws.com/dev
-NEXT_PUBLIC_USER_POOL_ID=us-east-1_SehO8B4FC
-NEXT_PUBLIC_USER_POOL_CLIENT_ID=55q7t23v9uojdvpnq9cmvqkisv
-NEXT_PUBLIC_REGION=us-east-1
+### Participantes
+```
+GET    /events/{id}/participants                        # Lista participantes
+POST   /events/{id}/participants                        # Registrar participante
+POST   /events/{id}/participants/{participantId}/checkin # Check-in
 ```
 
-### Backend
-Las variables se configuran automáticamente desde el CDK stack.
+### Upload
+```
+POST /upload   # Obtener presigned URL para S3
+```
 
-## 🚀 Inicio Rápido
+## 🎨 Diseño
 
-1. **Ejecutar schema SQL** (ver arriba)
-2. **Configurar SES** (verificar email)
-3. **Iniciar frontend:**
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-4. **Crear cuenta** en `http://localhost:3000/login`
-5. **Crear primer evento** desde el dashboard
+- **Paleta de Colores**: Purple/Blue gradient
+- **Iconografía**: Heroicons via SVG
+- **Tipografía**: Inter (Google Fonts)
+- **Componentes**: Tailwind CSS utility-first
+- **Animaciones**: CSS transitions + Tailwind
 
-## 📚 Documentación
+## 🚀 Deploy en AWS Amplify
 
-- **Especificación Completa:** `EVENTMASTER-WL-COMPLETE-SPEC.md`
-- **Quick Start:** `QUICK_START.md`
-- **Estado del Proyecto:** `PROJECT_STATUS.md`
-- **Outputs del Deploy:** `DEPLOY_OUTPUTS.md`
+1. Conecta el repositorio a AWS Amplify
+2. Configura las variables de entorno
+3. Amplify detecta automáticamente `amplify.yml`
+4. Build y deploy automático en cada push
 
-## ✅ Estado Actual
+### Variables de Entorno en Amplify
+```
+NEXT_PUBLIC_API_URL
+NEXT_PUBLIC_USER_POOL_ID
+NEXT_PUBLIC_USER_POOL_CLIENT_ID
+NEXT_PUBLIC_AWS_REGION
+```
 
-- ✅ **Infraestructura:** Desplegada en AWS
-- ✅ **Backend:** 9 Lambda functions funcionando
-- ✅ **Frontend:** 10+ pantallas implementadas
-- ⏳ **Database:** Schema listo, pendiente ejecutar en RDS
-- ⏳ **SES:** Pendiente verificar email
+## 🔒 Seguridad
 
-## 🎯 Funcionalidades
+- ✅ Auth con JWT tokens
+- ✅ HTTPS obligatorio
+- ✅ CORS configurado
+- ✅ Tokens en localStorage (considerar httpOnly cookies)
+- ✅ Validación de inputs
+- ✅ Rate limiting en API Gateway
 
-- ✅ Multi-tenant con branding personalizable
-- ✅ Creación y gestión de eventos
-- ✅ Registro público de participantes
-- ✅ Generación automática de QR codes
-- ✅ Sistema de check-in
-- ✅ Envío de emails y SMS
-- ✅ Dashboard con estadísticas
-- ✅ Páginas públicas con tema del tenant
+## 📊 Estado del Proyecto
 
+### ✅ Completado
+- [x] Estructura frontend base
+- [x] Sistema de autenticación magic link
+- [x] Dashboard con lista de eventos
+- [x] Configuración API client
+- [x] Middleware y routing
+- [x] Página de verificación
+- [x] Layout y estilos base
+
+### 🚧 En Progreso
+- [ ] Página de creación de eventos
+- [ ] Página de detalles de evento
+- [ ] Sistema de check-in QR
+- [ ] Lista de participantes
+
+### 📋 Por Hacer
+- [ ] Backend Lambda functions
+- [ ] Base de datos schema
+- [ ] Infraestructura CDK
+- [ ] Tests unitarios
+- [ ] Tests E2E
+- [ ] CI/CD pipeline
+- [ ] Documentación API
+
+## 🤝 Contribuir
+
+1. Fork el proyecto
+2. Crea una rama (`git checkout -b feature/AmazingFeature`)
+3. Commit cambios (`git commit -m 'Add AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📝 Licencia
+
+MIT License - ver `LICENSE` file para detalles
+
+## 👥 Equipo
+
+- **Desarrollador Principal**: [Tu Nombre]
+
+## 📞 Soporte
+
+Para soporte, email: support@eventmaster.com
+
+---
+
+**Hecho con ❤️ usando Next.js y AWS**

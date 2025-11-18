@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import apiClient from '@/lib/api';
 import { StyledButton } from '@/components/StyledButton';
@@ -20,10 +20,10 @@ interface Event {
   capacity: number | null;
 }
 
-export default function EventDetailPage() {
-  const params = useParams();
+function EventDetailContent() {
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const eventId = params.eventId as string;
+  const eventId = searchParams?.get('id') || '';
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'participants' | 'checkin'>('overview');
@@ -222,6 +222,14 @@ export default function EventDetailPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function EventDetailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando...</div>}>
+      <EventDetailContent />
+    </Suspense>
   );
 }
 
