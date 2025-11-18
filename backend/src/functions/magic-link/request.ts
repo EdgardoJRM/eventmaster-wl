@@ -1,4 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+
+
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { createResponse } from '../shared/utils';
 import * as crypto from 'crypto';
