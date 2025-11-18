@@ -96,6 +96,11 @@ export const participantsApi = {
     const response = await api.post(`/events/${eventId}/participants/${participantId}/checkin`);
     return response.data;
   },
+  
+  resendEmail: async (eventId: string, participantId: string) => {
+    const response = await api.post(`/events/${eventId}/participants/${participantId}/resend-email`);
+    return response.data;
+  },
 };
 
 // Upload API
