@@ -16,8 +16,6 @@ interface CheckIn {
   status: string;
 }
 
-export const dynamicParams = true;
-
 export default function CheckInPage() {
   const params = useParams();
   const router = useRouter();

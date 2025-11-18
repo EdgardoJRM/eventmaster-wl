@@ -27,8 +27,6 @@ interface PublicEvent {
   };
 }
 
-export const dynamicParams = true;
-
 export default function PublicEventPage() {
   const params = useParams();
   const tenantSlug = params.tenantSlug as string;

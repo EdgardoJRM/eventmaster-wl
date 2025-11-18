@@ -6,8 +6,6 @@ import { fetchAuthSession } from 'aws-amplify/auth';
 import apiClient from '@/lib/api';
 import { StyledButton } from '@/components/StyledButton';
 
-export const dynamicParams = true;
-
 export default function EditEventPage() {
   const params = useParams();
   const router = useRouter();

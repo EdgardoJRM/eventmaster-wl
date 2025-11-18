@@ -20,8 +20,6 @@ interface Event {
   capacity: number | null;
 }
 
-export const dynamicParams = true;
-
 export default function EventDetailPage() {
   const params = useParams();
   const router = useRouter();

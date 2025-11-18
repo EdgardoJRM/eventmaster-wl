@@ -17,8 +17,6 @@ interface Participant {
   created_at: string;
 }
 
-export const dynamicParams = true;
-
 export default function ParticipantsPage() {
   const params = useParams();
   const router = useRouter();
