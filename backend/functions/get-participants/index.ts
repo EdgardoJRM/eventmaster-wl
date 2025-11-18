@@ -20,7 +20,9 @@ export const handler = async (
       });
     }
 
-    const eventId = event.queryStringParameters?.event_id;
+    // Extract event_id from path parameters (for /events/{event_id}/participants)
+    // or from query string (for /participants?event_id=xxx)
+    const eventId = event.pathParameters?.event_id || event.pathParameters?.eventId || event.queryStringParameters?.event_id;
     const status = event.queryStringParameters?.status;
     const search = event.queryStringParameters?.search;
     const limit = parseInt(event.queryStringParameters?.limit || '50');

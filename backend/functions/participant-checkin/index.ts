@@ -35,23 +35,39 @@ export const handler = async (
     // Extract user_id (staff member)
     const userId = event.requestContext.authorizer?.user_id || 'system';
 
+    // Support both direct path params and QR code scanning
+    const pathEventId = event.pathParameters?.event_id || event.pathParameters?.eventId;
+    const pathParticipantId = event.pathParameters?.participant_id || event.pathParameters?.participantId;
+
     // Parse request body
     const body: CheckInRequest = JSON.parse(event.body || '{}');
     const { qr_code, event_id, location } = body;
 
-    if (!qr_code) {
+    let qrData: { eventId: string; participantId: string; tenantId: string } | null = null;
+
+    // Case 1: Path parameters provided (direct check-in from admin panel)
+    if (pathEventId && pathParticipantId) {
+      qrData = {
+        eventId: pathEventId,
+        participantId: pathParticipantId,
+        tenantId: tenantId
+      };
+    }
+    // Case 2: QR code scanning
+    else if (qr_code) {
+      qrData = parseQRData(qr_code);
+      if (!qrData) {
+        return createResponse(404, {
+          success: false,
+          error: { code: 'INVALID_QR', message: 'Invalid QR code format' }
+        });
+      }
+    }
+    // Case 3: No valid input
+    else {
       return createResponse(400, {
         success: false,
-        error: { code: 'MISSING_QR', message: 'QR code is required' }
-      });
-    }
-
-    // Parse QR code data
-    const qrData = parseQRData(qr_code);
-    if (!qrData) {
-      return createResponse(404, {
-        success: false,
-        error: { code: 'INVALID_QR', message: 'Invalid QR code format' }
+        error: { code: 'MISSING_PARAMS', message: 'Either provide event_id/participant_id in path or qr_code in body' }
       });
     }
 
@@ -71,26 +87,51 @@ export const handler = async (
       });
     }
 
-    // Query participant by QR code
-    const participantQuery = await docClient.send(
-      new QueryCommand({
-        TableName: PARTICIPANTS_TABLE,
-        IndexName: 'GSI4-qr-code',
-        KeyConditionExpression: 'qr_code_data = :qr',
-        ExpressionAttributeValues: {
-          ':qr': qr_code
-        }
-      })
-    );
+    // Query participant - either by ID (direct) or by QR code (scanning)
+    let participant: any;
 
-    if (!participantQuery.Items || participantQuery.Items.length === 0) {
-      return createResponse(404, {
-        success: false,
-        error: { code: 'PARTICIPANT_NOT_FOUND', message: 'Participant not found' }
-      });
+    if (pathParticipantId) {
+      // Direct lookup by participant_id
+      const participantQuery = await docClient.send(
+        new QueryCommand({
+          TableName: PARTICIPANTS_TABLE,
+          KeyConditionExpression: 'participant_id = :pid',
+          ExpressionAttributeValues: {
+            ':pid': qrData.participantId
+          }
+        })
+      );
+
+      if (!participantQuery.Items || participantQuery.Items.length === 0) {
+        return createResponse(404, {
+          success: false,
+          error: { code: 'PARTICIPANT_NOT_FOUND', message: 'Participant not found' }
+        });
+      }
+
+      participant = participantQuery.Items[0];
+    } else {
+      // Lookup by QR code (for scanner)
+      const participantQuery = await docClient.send(
+        new QueryCommand({
+          TableName: PARTICIPANTS_TABLE,
+          IndexName: 'GSI4-qr-code',
+          KeyConditionExpression: 'qr_code_data = :qr',
+          ExpressionAttributeValues: {
+            ':qr': qr_code
+          }
+        })
+      );
+
+      if (!participantQuery.Items || participantQuery.Items.length === 0) {
+        return createResponse(404, {
+          success: false,
+          error: { code: 'PARTICIPANT_NOT_FOUND', message: 'Participant not found' }
+        });
+      }
+
+      participant = participantQuery.Items[0];
     }
-
-    const participant = participantQuery.Items[0];
 
     // Verify participant belongs to correct tenant
     if (participant.tenant_id !== tenantId) {

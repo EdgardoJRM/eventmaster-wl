@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
 const client_dynamodb_1 = require("@aws-sdk/client-dynamodb");
 const lib_dynamodb_1 = require("@aws-sdk/lib-dynamodb");
-const utils_1 = require("../shared/utils");
+const utils_1 = require("./shared/utils");
 const dynamoClient = new client_dynamodb_1.DynamoDBClient({});
 const docClient = lib_dynamodb_1.DynamoDBDocumentClient.from(dynamoClient);
 const PARTICIPANTS_TABLE = process.env.PARTICIPANTS_TABLE;
@@ -16,7 +16,9 @@ const handler = async (event) => {
                 error: { code: 'UNAUTHORIZED', message: 'Invalid or missing token' }
             });
         }
-        const eventId = event.queryStringParameters?.event_id;
+        // Extract event_id from path parameters (for /events/{event_id}/participants)
+        // or from query string (for /participants?event_id=xxx)
+        const eventId = event.pathParameters?.event_id || event.pathParameters?.eventId || event.queryStringParameters?.event_id;
         const status = event.queryStringParameters?.status;
         const search = event.queryStringParameters?.search;
         const limit = parseInt(event.queryStringParameters?.limit || '50');
