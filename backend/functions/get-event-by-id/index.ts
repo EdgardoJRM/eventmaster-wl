@@ -23,8 +23,8 @@ export const handler = async (
       });
     }
 
-    // Extract event_id from path parameters
-    const eventId = event.pathParameters?.eventId;
+    // Extract event_id from path parameters (try both formats)
+    const eventId = event.pathParameters?.eventId || event.pathParameters?.event_id;
     if (!eventId) {
       return createResponse(400, {
         success: false,
