@@ -19,7 +19,8 @@ export function extractTenantId(event: APIGatewayProxyEvent): string | null {
     );
 
     // Extract tenant_id from custom claim
-    return payload['custom:tenant_id'] || payload.tenant_id || null;
+    // Si no hay tenant_id, usar el sub (user ID) como tenant para single-user mode
+    return payload['custom:tenant_id'] || payload.tenant_id || payload.sub || null;
   } catch (error) {
     console.error('Error extracting tenant_id:', error);
     return null;
