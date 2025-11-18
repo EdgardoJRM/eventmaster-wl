@@ -1,0 +1,19 @@
+{
+  "name": "setup-db-lambda",
+  "version": "1.0.0",
+  "description": "Lambda temporal para ejecutar schema SQL",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.0.0",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/pg": "^8.10.9",
+    "typescript": "^5.3.3"
+  }
+}
+
