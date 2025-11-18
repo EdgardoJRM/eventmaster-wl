@@ -192,12 +192,27 @@ Las Lambdas necesitan:
 
 - [x] Actualizar `frontend/src/lib/api.ts`
 - [x] Actualizar `frontend/src/app/auth/verify/page.tsx`
-- [ ] Crear tabla `magic_link_tokens` en RDS
-- [ ] Crear Lambda `/auth/magic-link/request`
-- [ ] Crear Lambda `/auth/magic-link/verify`
-- [ ] Configurar rutas en API Gateway
-- [ ] Configurar permisos IAM
-- [ ] Deploy y test
+- [x] Crear Lambda `/auth/magic-link/request` (`backend/src/functions/magic-link/request.ts`)
+- [x] Crear Lambda `/auth/magic-link/verify` (`backend/src/functions/magic-link/verify.ts`)
+- [x] Crear script SQL tabla `magic_link_tokens` (`backend/database/migrations/003_magic_link_tokens.sql`)
+- [ ] Configurar RDS PostgreSQL y ejecutar migration SQL
+- [ ] Implementar función `query()` en Lambdas (conectar a RDS)
+- [ ] Compilar y desplegar Lambdas a AWS
+- [ ] Configurar rutas en API Gateway:
+  - POST `/auth/magic-link/request` → Lambda request
+  - POST `/auth/magic-link/verify` → Lambda verify
+- [ ] Configurar permisos IAM:
+  - SES: `ses:SendEmail`
+  - Cognito: `cognito-idp:Admin*`
+  - RDS: Acceso desde VPC
+- [ ] Configurar variables de entorno en Lambdas:
+  - `USER_POOL_ID=us-east-1_BnjZCmw7O`
+  - `USER_POOL_CLIENT_ID=5h866q6llftkq2lhidqbm4pntc`
+  - `FROM_EMAIL=soporte@edgardohernandez.com`
+  - `FRONTEND_URL=https://main.d14jon4zzm741k.amplifyapp.com`
+  - `MAGIC_LINK_PASSWORD=EventMaster2025!@#`
+  - `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+- [ ] Test end-to-end
 - [ ] Eliminar Cognito triggers (ya no se usan)
 
 ---
