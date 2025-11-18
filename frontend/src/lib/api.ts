@@ -36,16 +36,27 @@ api.interceptors.response.use(
 );
 
 // Auth API - uses Cognito directly, not REST endpoints
+// Prevenir múltiples llamadas simultáneas
+const pendingRequests = new Map<string, Promise<any>>();
+
 export const authApi = {
   requestMagicLink: async (email: string) => {
-    try {
-      // Primero intentamos signIn
-      const signInOutput = await signIn({
-        username: email,
-        options: {
-          authFlowType: 'CUSTOM_WITHOUT_SRP',
-        },
-      });
+    // Si ya hay una solicitud en progreso para este email, retornarla
+    if (pendingRequests.has(email)) {
+      console.log('Request already in progress for', email);
+      return pendingRequests.get(email);
+    }
+
+    // Crear nueva promesa y guardarla
+    const request = (async () => {
+      try {
+        // Primero intentamos signIn
+        const signInOutput = await signIn({
+          username: email,
+          options: {
+            authFlowType: 'CUSTOM_WITHOUT_SRP',
+          },
+        });
       
       return {
         success: true,
@@ -96,8 +107,17 @@ export const authApi = {
         }
       }
       
-      throw error;
-    }
+        throw error;
+      } finally {
+        // Limpiar solicitud pendiente después de completar
+        pendingRequests.delete(email);
+      }
+    })();
+
+    // Guardar promesa
+    pendingRequests.set(email, request);
+    
+    return request;
   },
   
   verifyMagicLink: async (email: string, code: string) => {
