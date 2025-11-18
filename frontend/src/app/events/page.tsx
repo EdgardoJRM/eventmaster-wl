@@ -26,12 +26,12 @@ export default function EventsPage() {
       try {
         const session = await fetchAuthSession();
         if (!session.tokens) {
-          router.push('/login');
+          router.push('/');
           return;
         }
         loadEvents();
       } catch (error) {
-        router.push('/login');
+        router.push('/');
       }
     }
 

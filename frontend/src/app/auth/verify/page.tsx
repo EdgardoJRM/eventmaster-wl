@@ -81,7 +81,7 @@ function VerifyMagicLinkContent() {
             <p className="text-sm mt-1">{error}</p>
           </div>
           <div className="text-center space-y-4">
-            <StyledButton onClick={() => router.push('/login')}>
+            <StyledButton onClick={() => router.push('/')}>
               Volver al Login
             </StyledButton>
             <p className="text-sm text-gray-600">
